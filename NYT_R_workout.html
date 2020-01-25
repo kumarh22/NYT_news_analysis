@@ -1,0 +1,3241 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Kumar Suresh Halake" />
+
+<meta name="date" content="2020-01-25" />
+
+<title>The New York Times : News Scrapping</title>
+
+<script src="NYT_R_workout_files/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="NYT_R_workout_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="NYT_R_workout_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="NYT_R_workout_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="NYT_R_workout_files/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="NYT_R_workout_files/navigation-1.1/tabsets.js"></script>
+<script src="NYT_R_workout_files/navigation-1.1/codefolding.js"></script>
+<link href="NYT_R_workout_files/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="NYT_R_workout_files/highlightjs-9.12.0/highlight.js"></script>
+<script src="NYT_R_workout_files/kePrint-0.0.1/kePrint.js"></script>
+<script src="NYT_R_workout_files/htmlwidgets-1.5.1/htmlwidgets.js"></script>
+<link href="NYT_R_workout_files/vis-4.20.1/vis.css" rel="stylesheet" />
+<script src="NYT_R_workout_files/vis-4.20.1/vis.min.js"></script>
+<script src="NYT_R_workout_files/visNetwork-binding-2.0.9/visNetwork.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">The New York Times : News Scrapping</h1>
+<h4 class="author">Kumar Suresh Halake</h4>
+<h4 class="date">25 January 2020</h4>
+
+</div>
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#article-search">Article search</a></li>
+<li><a href="#scrapping-each-text-article-and-combining">Scrapping each text article and combining</a></li>
+<li><a href="#tidytext-format">Tidytext format</a></li>
+<li><a href="#single-word-tokenization">Single word tokenization</a></li>
+<li><a href="#sentiment-analysis">Sentiment Analysis</a></li>
+<li><a href="#term-frequency-and-inverse-document-frequency-tf-idf">Term frequency and inverse document frequency [tf-idf]</a></li>
+<li><a href="#relationships-between-words-n-grams-and-correlations">Relationships between words: N-grams and correlations</a></li>
+<li><a href="#network-of-bigrams">Network of bigrams</a></li>
+<li><a href="#count-of-word-pairs-in-each-article-using-widyr-package">Count of word pairs in each article using <code>widyr</code> package</a></li>
+<li><a href="#coefficient-of-association-between-two-wordscorrelation">coefficient of association between two words(correlation)</a></li>
+<li><a href="#topic-modeling">Topic modeling</a></li>
+</ul>
+</div>
+
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 14px;
+  }
+td {  /* Table  */
+  font-size: 13px;
+}
+h1.title {
+  font-size: 38px;
+  color: purple;
+  font-family:Script,Blackletter;
+}
+h1 { /* Header 1 */
+  font-size: 28px;
+  color: DarkBlue;
+}
+h2 { /* Header 2 */
+    font-size: 25px;
+  color: DarkBlue;
+}
+h3 { /* Header 3 */
+  font-size: 22px;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkBlue;
+}
+code.r{ /* Code block */
+    font-size: 12px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 14px;
+}
+</style>
+<hr />
+<div id="introduction" class="section level3">
+<h3>Introduction</h3>
+<h1 style="font-family: Sketch Gothic School; text-align: center">
+The New York Times
+</h1>
+<ul>
+<li><p><strong>The New York Times</strong> is a global media organization dedicated to helping people understand the world through unrivaled, on-the-ground, expert and deeply reported independent journalism</p></li>
+<li><p>Founded as the <em>New-York Daily Times</em> on September 18, 1851, by journalist and politician Henry Jarvis Raymond and former banker George Jones</p></li>
+<li><p>It is owned by <strong>The New York Times Company</strong></p></li>
+<li><p>It has got worldwide influence and readers. The paper has won 125 <strong>Pulitzer Prizes</strong>, more than any other newspaper.</p></li>
+<li><p>The New York Times is the second-most-circulated newspaper in the US (approximately 1,865,318 average circulation)</p></li>
+<li><p><strong>Slogan: </strong> <em>“All the News That’s Fit to Print”</em></p></li>
+<li><p><strong>Reputation : </strong> The Times has developed a national and international “reputation for thoroughness” over time.</p>
+<ul>
+<li>Among journalists, the paper is held in high regard; a 1999 survey of newspaper editors conducted by the Columbia Journalism Review found that the Times was the “best” American paper, ahead of The Washington Post, The Wall Street Journal, and Los Angeles Times.</li>
+<li>The Times also was ranked #1 in a 2011 “quality” ranking of U.S. newspapers by Daniel de Vise of The Washington Post; the objective ranking took into account the number of recent Pulitzer Prizes won, circulation, and perceived Web site quality.</li>
+<li>A 2012 report in WNYC called the Times “the most respected newspaper in the world.”</li>
+</ul></li>
+<li><p><a href="https://www.nytimes.com/">URL: https://www.nytimes.com/</a></p></li>
+</ul>
+<p><br /></p>
+<pre class="r"><code>list.of.packages &lt;- c(&#39;ggplot2&#39;, &#39;jsonlite&#39;, &#39;xml2&#39;, &#39;rvest&#39;, &#39;stringi&#39;, &#39;stringr&#39;, &#39;rebus&#39;, &#39;curl&#39;, &#39;tm&#39;, &#39;tidyr&#39;, &#39;tidytext&#39;, &#39;tidyverse&#39;, &#39;widyr&#39;, &#39;googleVis&#39;, &#39;knitr&#39;, &#39;kableExtra&#39;, &#39;topicmodels&#39;, &#39;gridExtra&#39;,&#39;crul&#39;,&#39;data.table&#39;,&#39;devtools&#39;,&#39;bindrcpp&#39;,&#39;wordcloud&#39;,&#39;igraph&#39;,&#39;magick&#39;,&#39;plotrix&#39;,&#39;visNetwork&#39;,&#39;png&#39;,&#39;textdata&#39;)
+
+new.packages &lt;- list.of.packages[!(list.of.packages %in% installed.packages()[,&quot;Package&quot;])]
+if(length(new.packages)&gt;0) {install.packages(new.packages)} #,dependencies = TRUE
+
+if(&quot;rtimes&quot; %in% rownames(installed.packages()) == FALSE) {install.packages(&#39;./rtimes&#39;, repos = NULL, type=&quot;source&quot;)} 
+#rtimes is removed from CRAN, archive --&gt; https://cran.r-project.org/src/contrib/Archive/rtimes/
+
+if(&quot;nytimes&quot; %in% rownames(installed.packages()) == FALSE) {devtools::install_github(&quot;mkearney/nytimes&quot;)}
+
+unlist(lapply(append(list.of.packages,c(&quot;nytimes&quot;,&quot;rtimes&quot;)), require, character.only = TRUE))</code></pre>
+<pre><code> [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+[16] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+[31] TRUE</code></pre>
+<hr />
+</div>
+<div id="article-search" class="section level3">
+<h3>Article search</h3>
+<p>First of all we are searching all the articles from <em>12 February 2018</em> to <em>22 April 2018</em> having the keyword <strong>parkland</strong> by using the function <code>as_search()</code> with required arguments in it. Then we get the metadata like <em>url, headline, snippet, keywords, pub_date, word_count</em>, etc of all the articles containing the specified keyword. Then after to access the full content of each article, we need to scrap by using the article url(which is in metadata) with the help of packages like <code>curl</code>,<code>xml2</code> and other.</p>
+<p>Our main focus is on text articles only, so the scrapping of content is done only for those articles, which are in textual format and not other multimedia formats like image, video, etc.</p>
+<p><strong>NOTE: </strong> : If one interested in other keywords and another date range, just make corresponding changes in following snippet. The API’s could be found <a href="https://developer.nytimes.com/apis">here</a></p>
+<pre class="r"><code>a &lt;- as_search(q=&quot;Parkland&quot;, # search query term
+               key = NYTIMES_AS_KEY, # the secret key
+               begin_date = &#39;20180212&#39;, # Start date
+               end_date = &#39;20180422&#39;, # End date
+               all_results = TRUE,
+               fl = c(&#39;web_url&#39;,&#39;snippet&#39;,&#39;lead_paragraph&#39;,&#39;abstract&#39;,&#39;blog&#39;,&#39;source&#39;,&#39;headline&#39;,&#39;keywords&#39;,&#39;pub_date&#39;,&#39;document_type&#39;,&#39;news_desk&#39;,&#39;byline&#39;,&#39;type_of_material&#39;,&#39;word_count&#39;) # field results to return
+               )
+# str(a)</code></pre>
+<pre><code>[1] &quot;The size of metadata is : 2.226448 MB&quot;</code></pre>
+<p><br /></p>
+<p>The metadata is containing following variables</p>
+<pre class="r"><code>names(a$data)</code></pre>
+<pre><code> [1] &quot;web_url&quot;                 &quot;snippet&quot;                
+ [3] &quot;source&quot;                  &quot;keywords&quot;               
+ [5] &quot;pub_date&quot;                &quot;document_type&quot;          
+ [7] &quot;new_desk&quot;                &quot;type_of_material&quot;       
+ [9] &quot;word_count&quot;              &quot;score&quot;                  
+[11] &quot;headline.main&quot;           &quot;headline.kicker&quot;        
+[13] &quot;headline.content_kicker&quot; &quot;headline.print_headline&quot;
+[15] &quot;headline.name&quot;           &quot;headline.seo&quot;           
+[17] &quot;headline.sub&quot;            &quot;byline.original&quot;        
+[19] &quot;byline.person&quot;           &quot;byline.organization&quot;    </code></pre>
+<p><br /></p>
+<p>The dimension of metadata is</p>
+<pre class="r"><code>dim(a$data)</code></pre>
+<pre><code>[1] 514  20</code></pre>
+<p><br /></p>
+<p>The view of metadata is as below</p>
+<pre class="r"><code>a$data %&gt;% head(2) %&gt;% kable() %&gt;%
+  kable_styling(bootstrap_options = &quot;striped&quot;, full_width = F, position = &quot;left&quot;) %&gt;%
+  scroll_box(width = &quot;900px&quot;, height = &quot;600px&quot;)</code></pre>
+<div style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:600px; overflow-x: scroll; width:900px; ">
+<table class="table table-striped" style="width: auto !important; ">
+<thead>
+<tr>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+web_url
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+snippet
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+source
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+keywords
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+pub_date
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+document_type
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+new_desk
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+type_of_material
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+word_count
+</th>
+<th style="text-align:right;position: sticky; top:0; background-color: #FFFFFF;">
+score
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+headline.main
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+headline.kicker
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+headline.content_kicker
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+headline.print_headline
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+headline.name
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+headline.seo
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+headline.sub
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+byline.original
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+byline.person
+</th>
+<th style="text-align:left;position: sticky; top:0; background-color: #FFFFFF;">
+byline.organization
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+<a href="https://www.nytimes.com/2018/02/26/us/parkland-florida-shooting.html" class="uri">https://www.nytimes.com/2018/02/26/us/parkland-florida-shooting.html</a>
+</td>
+<td style="text-align:left;">
+Emergency responders had to check for signs of life when they found the 17-year-old. On Monday, a cast on her arm was the only outward sign of her injuries.
+</td>
+<td style="text-align:left;">
+The New York Times
+</td>
+<td style="text-align:left;">
+list(name = c(“subject”, “organizations”, “glocations”, “persons”), value = c(“Parkland, Fla, Shooting (2018)”, “Marjory Stoneman Douglas High School (Parkland, Fla)”, “Parkland (Fla)”, “Wilford, Maddy”), rank = 1:4, major = c(“N”, “N”, “N”, “N”))
+</td>
+<td style="text-align:left;">
+2018-02-26T19:41:02+0000
+</td>
+<td style="text-align:left;">
+article
+</td>
+<td style="text-align:left;">
+National
+</td>
+<td style="text-align:left;">
+News
+</td>
+<td style="text-align:right;">
+534
+</td>
+<td style="text-align:right;">
+0.9067013
+</td>
+<td style="text-align:left;">
+Maddy Wilford, Shot 3 Times in Parkland, Is ‘So Grateful to Be Here’
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Shot 3 Times, and Nearly Ready for Class
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+By JESS BIDGOOD
+</td>
+<td style="text-align:left;">
+list(firstname = “Jess”, middlename = NA, lastname = “BIDGOOD”, qualifier = NA, title = NA, role = “reported”, organization = "", rank = 1)
+</td>
+<td style="text-align:left;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="https://www.nytimes.com/2018/03/15/us/surveillance-video-parkland-shooting.html" class="uri">https://www.nytimes.com/2018/03/15/us/surveillance-video-parkland-shooting.html</a>
+</td>
+<td style="text-align:left;">
+The video shows events outside Stoneman Douglas High during the shooting, including the only armed deputy at the school taking cover outside and not confronting the gunman.
+</td>
+<td style="text-align:left;">
+The New York Times
+</td>
+<td style="text-align:left;">
+list(name = c(“subject”, “organizations”, “persons”, “persons”, “subject”, “subject”, “glocations”), value = c(“Parkland, Fla, Shooting (2018)”, “Marjory Stoneman Douglas High School (Parkland, Fla)”, “Cruz, Nikolas”, “Peterson, Scot R (1963- )”, “School Shootings and Armed Attacks”, “Video Recordings, Downloads and Streaming”, “Parkland (Fla)”), rank = 1:7, major = c(“N”, “N”, “N”, “N”, “N”, “N”, “N”))
+</td>
+<td style="text-align:left;">
+2018-03-15T17:04:52+0000
+</td>
+<td style="text-align:left;">
+article
+</td>
+<td style="text-align:left;">
+National
+</td>
+<td style="text-align:left;">
+News
+</td>
+<td style="text-align:right;">
+905
+</td>
+<td style="text-align:right;">
+0.8861727
+</td>
+<td style="text-align:left;">
+Parkland Shooting Surveillance Video Shows Deputy Remained Outside
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+Video Shows Deputy Take Cover Outside School as Shots Rang Out Inside
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+By PATRICIA MAZZEI
+</td>
+<td style="text-align:left;">
+list(firstname = “Patricia”, middlename = NA, lastname = “MAZZEI”, qualifier = NA, title = NA, role = “reported”, organization = "", rank = 1)
+</td>
+<td style="text-align:left;">
+NA
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr />
+</div>
+<div id="scrapping-each-text-article-and-combining" class="section level3">
+<h3>Scrapping each text article and combining</h3>
+<p>Here we are considering roughly 500 text news articles, which contain the word <em>parkland</em>. These articles are appended serially one after one in a string vector <code>p</code>.</p>
+<pre class="r"><code>p = character()
+
+for(url in a$data$web_url[a$data$document_type==&quot;article&quot;][1:500]){
+  
+  page = read_html(curl(url, handle = curl::new_handle(&quot;useragent&quot; = &quot;Mozilla/5.0&quot;)))
+  
+  full_text = page %&gt;% 
+    html_nodes(&#39;p&#39;) %&gt;%
+    html_text()
+  
+  full_text = str_replace_all(string = full_text,pattern = &quot;Advertisement&quot;,replacement = &quot;&quot;)
+
+  full_text = str_replace_all(string = full_text,pattern = &quot;Sign up to receive an email from The New York Times as soon as important news breaks around the world.&quot;,replacement = &quot;&quot;)
+  
+  full_text = str_replace_all(string = full_text,pattern = &quot;Please verify you&#39;re not a robot by clicking the box.&quot;,replacement = &quot;&quot;)
+  
+  full_text = str_replace_all(string = full_text,pattern = &quot;Invalid email address. Please re-enter.&quot;,replacement = &quot;&quot;)
+  
+  full_text = str_replace_all(string = full_text,pattern = &quot;You must select a newsletter to subscribe to.&quot;,replacement = &quot;&quot;)
+  
+  full_text = str_replace_all(string = full_text,pattern = &quot;View all New York Times newsletters.&quot;,replacement = &quot;&quot;)
+
+  full_text = str_replace_all(string = full_text,pattern = &quot;We’re interested in your feedback on this page. Tell us what you think.&quot;,replacement = &quot;&quot;)
+
+  full_text = str_replace_all(string = full_text,pattern = &quot;Go to Home Page »&quot;,replacement = &quot;&quot;)
+  
+  # full_text = paste(str_replace_all(string = full_text,pattern = DIGIT,replacement = &quot;&quot;))
+  
+  p = append(p,paste(full_text,collapse = &quot; &quot;))
+  
+}
+
+# It may take few minutes to perform above scrapping operation. Some minor cleaning process is included in the for loop, where the fixed advertisement/notification is eliminated</code></pre>
+<hr />
+</div>
+<div id="tidytext-format" class="section level3">
+<h3>Tidytext format</h3>
+<p><em>Unstructured data analysis</em> involves some transformations, so that it would become easy to analyse/explore and applying various algorithms. The <em>tidytext</em> format comes handy in such cases.</p>
+<p>Tidy text is nothing but each row representsn the unit fragmant of text(word/sentence/paragraph/article/section) and each column is its attribute. This form is convenient for analysis with the dplyr, tidytext and ggplot2 packages.</p>
+<p>Here we are converting the extracted data to tidy format, so that it will become easy for text analysis with the help of some suiatble packages like’ <code>tidyr</code>,<code>tidytext</code>.</p>
+<p>We have a metadata of required articles in the object <code>a</code> and the actual news content is stored in vector <code>p</code>. So retaining the attributes of each article along with its full content is done as below.</p>
+<pre class="r"><code># The text data is in artciles document type only and not in other multimedia formats, so considering article format only
+nd &lt;- a$data$new_desk[a$data$document_type==&quot;article&quot;][1:500]
+pd &lt;- as.Date(substr(a$data$pub_date[a$data$document_type==&quot;article&quot;][1:500],0,10))
+sc &lt;- a$data$score[a$data$document_type==&quot;article&quot;][1:500]
+
+mydata &lt;- data_frame(new_desk = nd,artcle_no = 1:500,article_body = p,pub_date = pd,score = sc)
+
+# There are some more related sections in news paper, so here we are combining them for easy analysis
+
+# U.S, Politics and U.S-Politics are all considered same
+mydata$new_desk &lt;- ifelse(mydata$new_desk == &quot;U.S.&quot; | 
+                            mydata$new_desk == &quot;Politics&quot; | 
+                            mydata$new_desk == &quot;U.S. / Politics&quot;, &quot;U.S./Politics&quot;,mydata$new_desk)
+
+# learning Network and Learning are also considered same
+mydata$new_desk &lt;- ifelse(mydata$new_desk == &quot;The Learning Network&quot; | 
+                            mydata$new_desk == &quot;Learning&quot;, &quot;Learning&quot;,mydata$new_desk)
+
+# Letters,OpEd and Editorial are treated as Opinion
+mydata$new_desk &lt;- ifelse(mydata$new_desk == &quot;Letters&quot; |
+                            mydata$new_desk == &quot;OpEd&quot; |
+                            mydata$new_desk == &quot;Editorial&quot;, &quot;Opinion&quot;,mydata$new_desk)
+
+# New column day is created
+mydata$day = weekdays(mydata$pub_date)</code></pre>
+<pre class="r"><code>dplyr::glimpse(mydata)</code></pre>
+<pre><code>Observations: 500
+Variables: 6
+$ new_desk     &lt;chr&gt; &quot;National&quot;, &quot;National&quot;, &quot;Culture&quot;, &quot;National&quot;, &quot;National…
+$ artcle_no    &lt;dbl&gt; 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 1…
+$ article_body &lt;chr&gt; &quot;By PATRICIA MAZZEIMARCH 15, 2018 Surveillance video rel…
+$ pub_date     &lt;date&gt; 2018-03-15, 2018-02-15, 2018-04-18, 2018-02-26, 2018-02…
+$ score        &lt;dbl&gt; 0.9281394, 0.8754205, 0.8734122, 0.8654591, 0.8280622, 0…
+$ day          &lt;chr&gt; &quot;Thursday&quot;, &quot;Thursday&quot;, &quot;Wednesday&quot;, &quot;Monday&quot;, &quot;Friday&quot;,…</code></pre>
+<p>Now our data is ready, each row is article and each column is its attribute. Next we are tokenizing it in unigram and bigram then performing some graphical explorations and analysis</p>
+<hr />
+</div>
+<div id="single-word-tokenization" class="section level3">
+<h3>Single word tokenization</h3>
+<p>Creating a tidy data frame with single word tokens, retaining all of its attributes alongside is as done below.</p>
+<pre class="r"><code>tidy1 &lt;- mydata %&gt;% 
+  unnest_tokens(word,article_body)
+tidy1$word = ifelse(tidy1$word == &quot;gun&quot; | tidy1$word == &quot;guns&quot;,&quot;gun&quot;,tidy1$word) # gun and guns have same meaning
+tidy1$word = ifelse(tidy1$word == &quot;student&quot; | tidy1$word == &quot;students&quot;,&quot;student&quot;,tidy1$word)
+
+tidy1 %&gt;% head(10) %&gt;% kable() %&gt;% kable_styling(bootstrap_options = &quot;striped&quot;, full_width = F, position = &quot;left&quot;)</code></pre>
+<table class="table table-striped" style="width: auto !important; ">
+<thead>
+<tr>
+<th style="text-align:left;">
+new_desk
+</th>
+<th style="text-align:right;">
+artcle_no
+</th>
+<th style="text-align:left;">
+pub_date
+</th>
+<th style="text-align:right;">
+score
+</th>
+<th style="text-align:left;">
+day
+</th>
+<th style="text-align:left;">
+word
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+National
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+2018-03-15
+</td>
+<td style="text-align:right;">
+0.9281394
+</td>
+<td style="text-align:left;">
+Thursday
+</td>
+<td style="text-align:left;">
+by
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+National
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+2018-03-15
+</td>
+<td style="text-align:right;">
+0.9281394
+</td>
+<td style="text-align:left;">
+Thursday
+</td>
+<td style="text-align:left;">
+patricia
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+National
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+2018-03-15
+</td>
+<td style="text-align:right;">
+0.9281394
+</td>
+<td style="text-align:left;">
+Thursday
+</td>
+<td style="text-align:left;">
+mazzeimarch
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+National
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+2018-03-15
+</td>
+<td style="text-align:right;">
+0.9281394
+</td>
+<td style="text-align:left;">
+Thursday
+</td>
+<td style="text-align:left;">
+15
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+National
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+2018-03-15
+</td>
+<td style="text-align:right;">
+0.9281394
+</td>
+<td style="text-align:left;">
+Thursday
+</td>
+<td style="text-align:left;">
+2018
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+National
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+2018-03-15
+</td>
+<td style="text-align:right;">
+0.9281394
+</td>
+<td style="text-align:left;">
+Thursday
+</td>
+<td style="text-align:left;">
+surveillance
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+National
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+2018-03-15
+</td>
+<td style="text-align:right;">
+0.9281394
+</td>
+<td style="text-align:left;">
+Thursday
+</td>
+<td style="text-align:left;">
+video
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+National
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+2018-03-15
+</td>
+<td style="text-align:right;">
+0.9281394
+</td>
+<td style="text-align:left;">
+Thursday
+</td>
+<td style="text-align:left;">
+released
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+National
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+2018-03-15
+</td>
+<td style="text-align:right;">
+0.9281394
+</td>
+<td style="text-align:left;">
+Thursday
+</td>
+<td style="text-align:left;">
+thursday
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+National
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+2018-03-15
+</td>
+<td style="text-align:right;">
+0.9281394
+</td>
+<td style="text-align:left;">
+Thursday
+</td>
+<td style="text-align:left;">
+showed
+</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><p><em>new_desk: </em> section of article containing this word(unigram)</p></li>
+<li><p><em>article_no: </em> serial number of article from 1 to 500</p></li>
+<li><p><em>pub_date: </em> date published the article containing this word</p></li>
+<li><p><em>score: </em> the score of article in its metadata</p></li>
+<li><p><em>day: </em> day of publication</p></li>
+<li><p><em>word: </em> the unigram</p></li>
+</ul>
+<p><br /></p>
+<div id="frequent-words-in-all-articles" class="section level4">
+<h4>Frequent words in all articles</h4>
+<p>Let us see what are different words appeared most frequently in all 500 articles after removing all english stopwords and some custom stopwords like <em>new,york,times,subscribe,headline,article,edition</em>.</p>
+<pre class="r"><code>my_stop_words &lt;- bind_rows(stop_words,
+                           data.frame(word = c(&#39;new&#39;,&#39;york&#39;,&#39;times&#39;,&quot;subscribe&quot;,&quot;headline&quot;,&quot;article&quot;,&quot;edition&quot;,&quot;it&#39;s&quot;),
+                                      lexicon = rep(&#39;custom&#39;,8)))
+tidy1 %&gt;% 
+  anti_join(my_stop_words,by = c(&quot;word&quot;,&quot;word&quot;)) %&gt;% 
+  count(word,sort = TRUE) %&gt;% 
+  mutate(word = reorder(word,n)) %&gt;% 
+  top_n(20,n) %&gt;% 
+  ggplot(aes(word,n)) +
+  geom_bar(stat = &quot;identity&quot;) +
+  coord_flip() + theme_bw()</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
+<p>As we scrapped data pertaining to <strong>Parkland shooting</strong>, the frequent words whch appeared are also related to it.</p>
+<hr />
+<p><br /></p>
+</div>
+<div id="how-word-frequency-changed-day-by-day" class="section level4">
+<h4>How word frequency changed day by day?</h4>
+<p>The appearance pattern of any word which may be place/person/event in news articles is related to some eventual happening about that particular word. Here considering some words like <em>“gun”,“shooting”,“parkland”,“students”,“trump”,“korea”</em> then plottong the frequency versus the date thay appeared.</p>
+<pre class="r"><code>tidy1 %&gt;%
+  filter(word %in% c(&quot;gun&quot;,&quot;shooting&quot;,&quot;parkland&quot;,&quot;america&quot;,&quot;trump&quot;,&quot;korea&quot;)) %&gt;%
+  group_by(pub_date,word) %&gt;% tally() %&gt;% 
+  ggplot(aes(pub_date, n)) +
+  geom_point() +
+  geom_smooth() +
+  facet_wrap(~ word, scales = &quot;free_y&quot;,ncol = 3) +
+  # scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = &quot;Date published&quot;,y = &quot;frequency of word&quot;)</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-18-1.png" width="864" style="display: block; margin: auto;" /></p>
+<p>As we see here, the words like <em>gun</em>,<em>parkland</em>,<em>shooting</em>,<em>students</em> appeared more frequently on the day of 14 February because the <strong>Parkland school shooting</strong> happened on this day, and then the frequency decreased gradually.</p>
+<p>We can see different frequency pattern for the word <em>korea</em>, which is irrelevent to this shooting.</p>
+<hr />
+<p><br /></p>
+</div>
+<div id="sections-and-frequent-words" class="section level4">
+<h4>Sections and frequent words</h4>
+<p>There are many news sections in New York Times like <em>World</em>,<em>U.S.</em>,<em>Politics</em>,<em>National</em> and so forth. Below is comparison of which word appeared frequently in which section(s) and also what are different common words in pair of sections.</p>
+<pre class="r"><code>frequency &lt;- tidy1 %&gt;% 
+  anti_join(my_stop_words,by = c(&quot;word&quot;,&quot;word&quot;)) %&gt;%
+  mutate(word = str_extract(word, &quot;[a-z&#39;]+&quot;)) %&gt;%
+  count(new_desk, word) %&gt;% 
+  group_by(new_desk) %&gt;%
+  mutate(proportion = n / sum(n)) %&gt;% 
+  select(-n) %&gt;% 
+  spread(new_desk, proportion) %&gt;% 
+  gather(new_desk, proportion, c(&quot;Washington&quot;,&quot;National&quot;,&quot;Opinion&quot;,&quot;NYTNow&quot;))
+
+library(scales)
+
+ggplot(frequency, aes(x = proportion, y = Business, color = abs(Business - proportion))) +
+  geom_abline(color = &quot;gray40&quot;, lty = 2) +
+  geom_jitter(alpha = 0.1, size = 2.5, width = 0.3, height = 0.3) +
+  geom_text(aes(label = word), check_overlap = TRUE, vjust = 1.5) +
+  scale_x_log10(labels = percent_format()) +
+  scale_y_log10(labels = percent_format()) +
+  scale_color_gradient(limits = c(0, 0.001), low = &quot;darkslategray4&quot;, high = &quot;gray75&quot;) +
+  facet_wrap(~new_desk, ncol = 2) +
+  theme_gray() +
+  theme(legend.position=&quot;none&quot;,
+        panel.grid = element_blank(),
+        plot.background = element_rect(fill = &quot;gray90&quot;)) </code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-19-1.png" width="864" /></p>
+<ul>
+<li><p>Y-axis is the proportion of words in Business section and X-axix is proportion of words in <em>National</em>, <em>NYTNow</em>, <em>Washington</em> and <em>Opinion</em> respectively clockwise from upper-left facet.</p></li>
+<li><p>Words with clear view appeared frequently</p></li>
+<li><p>Word near to diagonal line appeared almost equally in both news sections (e.g the word <em>news</em> appeared equally in <em>Business</em> as well as <em>washington</em> sections)</p></li>
+<li><p>Word appearing off-diagonal or near to one of axes is frequent word in that section only. (e.g <em>israel</em> occured more in <em>National</em> but rarely in other news sections)</p></li>
+<li><p>The word <strong>gun</strong> is appeared in all <em>Business</em>,<em>National</em>,<em>Opinion</em> and <em>Washington</em> more or less same times</p></li>
+<li><p>Most of the words in <em>Business</em> and <em>Natioanl</em> are same (may be with more or less frequency), as the area is almost fully occupied. In contrast the gap at lower frequency in <em>Business</em> versus <em>NYTNow</em> indicates, there are many different word sets in these two sections.</p></li>
+</ul>
+<hr />
+<p><br /></p>
+</div>
+</div>
+<div id="sentiment-analysis" class="section level3">
+<h3>Sentiment Analysis</h3>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-20-1.png" width="432" style="display: block; margin: auto;" /></p>
+<p><strong>Sentiment Analysis (sometimes known as opinion mining or emotion AI) refers to the use of natural language processing, text analysis, computational linguistics, and biometrics to systematically identify, extract, quantify and study affective states and subjective information.</strong></p>
+<p>What sentiment we expect from a news which is totally related to terrific shooting? Letus see what is there in data and also compare sentiment for different sections as well.</p>
+<p>The <a href="https://www.cs.uic.edu/~liub/FBS/sentiment-analysis.html"><strong>bing</strong></a> lexicon categorizes words in a binary fashion that is positive and negative categories. Means it has collection of English words and also type of their sentiment (positive/negative). <code>tidytext</code> package provides a function called <code>get_sentiments</code>, which is used to get these sentiments.</p>
+<p>Note that there are other lexicons also available like -</p>
+<ul>
+<li><p><strong>AFINN</strong> is an affective lexicon by Finn Årup Nielsen. It is a list of English words rated for valence with an integer between minus five (negative) and plus five (positive). The words have been manually labeled by Finn Årup Nielsen in 2009-2011. For more details please refer: <a href="http://www2.imm.dtu.dk/pubdb/views/publication_details.php?id=6010"><strong>AFINN</strong></a></p></li>
+<li><p>The <strong>NRC</strong> Emotion Lexicon is a list of English words and their associations with eight basic emotions (anger, fear, anticipation, trust, surprise, sadness, joy, and disgust) and two sentiments (negative and positive). The annotations were manually done by crowdsourcing. For more details please refer: <a href="http://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm"><strong>nrc</strong></a></p></li>
+</ul>
+<p><br /></p>
+<div id="sentiment-of-each-article" class="section level4">
+<h4>Sentiment of each article</h4>
+<pre class="r"><code>tidy1 %&gt;%
+  inner_join(get_sentiments(&quot;bing&quot;)) %&gt;%
+  count(artcle_no, sentiment) %&gt;%
+  spread(sentiment, n, fill = 0) %&gt;%
+  mutate(sentiment = positive - negative) %&gt;% 
+  ggplot(aes(artcle_no,sentiment)) +
+  geom_col() + 
+  labs(x = &quot;&quot;) +
+  ggtitle(&quot;Sentiment of each article&quot;) +
+  theme_bw() +
+  theme(legend.position = &quot;none&quot;,
+        plot.title = element_text(hjust = 0.5))</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-21-1.png" width="672" style="display: block; margin: auto auto auto 0;" /></p>
+<p>This is what sentiment of all articles in 2 months having the specified word <em>parkland</em>, clearly indicating the dominance of negative sentiment level. There is some high positive sentimented articles which appeared recently.</p>
+<hr />
+</div>
+<div id="sentiment-for-selective-news-sections" class="section level4">
+<h4>Sentiment for selective news sections</h4>
+<pre class="r"><code>sentiment_of_news &lt;- tidy1 %&gt;%
+  inner_join(get_sentiments(&quot;bing&quot;)) %&gt;%
+  count(new_desk, artcle_no, sentiment) %&gt;%
+  spread(sentiment, n, fill = 0) %&gt;%
+  mutate(sentiment = positive - negative) %&gt;% 
+  filter(new_desk %in% c(&quot;Business&quot;,&quot;Washington&quot;,&quot;National&quot;,&quot;Opinion&quot;,&quot;NYTNow&quot;,&quot;Express&quot;))
+
+ggplot(sentiment_of_news, aes(artcle_no, sentiment, fill = new_desk)) +
+  geom_col(show.legend = FALSE) +
+  geom_hline(yintercept = 0,alpha = 0.3) +
+  labs(x = &quot;&quot;) +
+  facet_wrap(~new_desk, ncol = 2, scales = &quot;free_y&quot;) +
+  theme_grey() +
+  theme(panel.grid = element_blank(),
+        plot.background = element_rect(fill = &quot;gray93&quot;),axis.ticks.y = element_blank())</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-22-1.png" width="864" /></p>
+<p>As we see most of the articles are under <em>Business</em>,<em>National</em>,<em>Opinion</em> and <em>Washington</em> sections. The important observation from all facets is that the number as well as the level (height) of negative seniment is more than that of positive in all of the sections.</p>
+<hr />
+</div>
+<div id="positive-and-negative-words" class="section level4">
+<h4>Positive and negative words</h4>
+<p>Letus see what are frequently appeared positive and negative words which are contribted to the sentiments of articles depicted in previous plots.</p>
+<pre class="r"><code>po_neg_words &lt;- tidy1 %&gt;%
+  inner_join(get_sentiments(&quot;bing&quot;)) %&gt;%
+  count(word, sentiment, sort = TRUE) %&gt;%
+  ungroup()
+
+po_neg_words %&gt;% filter(word != &#39;trump&#39;) %&gt;% # trump is sentimentally a positive word, but in news it is a noun, so it should be treated properly.
+  group_by(sentiment) %&gt;%
+  top_n(10) %&gt;%
+  ungroup() %&gt;%
+  mutate(word = reorder(word, n)) %&gt;%
+  ggplot(aes(word, n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = &quot;free_y&quot;) +
+  labs(y = &quot;Contribution to sentiment&quot;,
+       x = NULL) +
+  coord_flip()</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-23-1.png" width="672" /></p>
+<p>The word <em>like</em> is somewhat like outlier, which changes its meaning situationally. Because it is preposition, conjuction, noun, adverb and adjective as well. But in our analysis it is reason for high skewness in positive sentiment.</p>
+<p>One drawback of these unigrams is that they consider the single word only, no matter what was its previous word. Because some negative words like <em>no, never, not, without, don’t</em> totally reverse the meaning of positive word to negativ and vise-versa. Such bigrams with negative first word are seen in bigram analysis.</p>
+<hr />
+</div>
+<div id="wordcloud" class="section level4">
+<h4>Wordcloud</h4>
+<pre class="r"><code>library(reshape2)
+library(wordcloud)
+tidy1 %&gt;%
+  inner_join(get_sentiments(&quot;bing&quot;)) %&gt;%
+  filter(word != &#39;trump&#39;) %&gt;% 
+  count(word, sentiment, sort = TRUE) %&gt;%
+  acast(word ~ sentiment, value.var = &quot;n&quot;, fill = 0) %&gt;%
+  comparison.cloud(colors = c(&quot;gray80&quot;, &quot;gray20&quot;),
+                   max.words = 100)</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-24-1.png" width="672" /></p>
+<p>All frequent positive and negative words are put graphically together in wordcloud.</p>
+<hr />
+<p><br /></p>
+</div>
+</div>
+<div id="term-frequency-and-inverse-document-frequency-tf-idf" class="section level3">
+<h3>Term frequency and inverse document frequency [tf-idf]</h3>
+<p>tf–idf or TFIDF is a numerical statistic that is intended to reflect how important a word is to a document in a collection or corpus. It is often used as a weighting factor in searches of information retrieval, text mining, and user modeling.</p>
+<p><strong>tf</strong> measures the frequency or proportion of terms in each document. If particular term is appeared many times in all documents, then that term is not at all important. So <strong>idf</strong> reduces the weight of such words which are common in most of documents. so to have a measure which quantifies the relative measure of each term(word) with respect to each document, we need to consider the product of both, i.e. <em>tf-idf</em></p>
+<p><br /> <br /></p>
+<p><span class="math inline">\(tf(t,d) = \frac{\text{number of times term t appeared in document d}}{\text{total number of terms in document d}}\)</span></p>
+<!-- $$\begin{aligned} -->
+<!-- idf(t) &= \frac{N}{n}\\ -->
+<!--        &= \frac{\text{Total number of documents}}{\text{number of documents containing the term t}} -->
+<!-- \end{aligned}$$ -->
+<p><br /></p>
+<p><span class="math inline">\(idf(t) = log{\left[\frac{N}{n} \right]} = log{\left[ \frac{\text{Total number of documents}}{\text{number of documents containing the term t}} \right]}\)</span></p>
+<p><br /></p>
+<p><span class="math inline">\(\text{tf-idf(t,d)} = tf(t,d) \times idf(t)\)</span></p>
+<pre class="r"><code>section_words &lt;- tidy1 %&gt;%
+  count(new_desk, word, sort = TRUE) %&gt;%
+  ungroup()
+
+total_words &lt;- section_words %&gt;% 
+  group_by(new_desk) %&gt;% 
+  summarize(total = sum(n))
+
+section_total_words &lt;- left_join(section_words, total_words)
+
+section_total_words %&gt;% head() %&gt;% kable() %&gt;% kable_styling(bootstrap_options = &quot;striped&quot;, full_width = F, position = &quot;left&quot;)</code></pre>
+<table class="table table-striped" style="width: auto !important; ">
+<thead>
+<tr>
+<th style="text-align:left;">
+new_desk
+</th>
+<th style="text-align:left;">
+word
+</th>
+<th style="text-align:right;">
+n
+</th>
+<th style="text-align:right;">
+total
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+National
+</td>
+<td style="text-align:left;">
+the
+</td>
+<td style="text-align:right;">
+6441
+</td>
+<td style="text-align:right;">
+118180
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Washington
+</td>
+<td style="text-align:left;">
+the
+</td>
+<td style="text-align:right;">
+4206
+</td>
+<td style="text-align:right;">
+71732
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Business
+</td>
+<td style="text-align:left;">
+the
+</td>
+<td style="text-align:right;">
+3760
+</td>
+<td style="text-align:right;">
+68378
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Opinion
+</td>
+<td style="text-align:left;">
+the
+</td>
+<td style="text-align:right;">
+3729
+</td>
+<td style="text-align:right;">
+72132
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+National
+</td>
+<td style="text-align:left;">
+a
+</td>
+<td style="text-align:right;">
+3301
+</td>
+<td style="text-align:right;">
+118180
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+National
+</td>
+<td style="text-align:left;">
+to
+</td>
+<td style="text-align:right;">
+3237
+</td>
+<td style="text-align:right;">
+118180
+</td>
+</tr>
+</tbody>
+</table>
+<p><br /></p>
+<div id="distribution-of-proportion-of-words" class="section level4">
+<h4>Distribution of proportion of words</h4>
+<pre class="r"><code>theme_set(theme_bw())
+ggplot(section_total_words %&gt;% filter(new_desk %in% c(&quot;Business&quot;,&quot;Washington&quot;,&quot;National&quot;,&quot;Opinion&quot;,&quot;NYTNow&quot;,&quot;Express&quot;)), 
+       aes(x = n/total, y = ..scaled.., fill = new_desk)) +
+  stat_density(show.legend = FALSE,position = &quot;identity&quot;) +
+  xlim(NA, 0.001) +
+  labs(x = &quot;proportion&quot;) +
+  facet_wrap(~new_desk, ncol = 2, scales = &quot;free_y&quot;) +
+  theme(strip.background = element_rect(fill = &quot;#DCDCDC&quot;))</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-27-1.png" width="864" style="display: block; margin: auto;" /></p>
+<p>This is distribution of proportion of words in each section separately. We see that words with less frequency have high density in almost all of the sections. There is discrete pattern of proportion in <em>Express and NYTNow</em></p>
+<hr />
+</div>
+<div id="zipfs-law" class="section level4">
+<h4>Zipf’s law</h4>
+<ul>
+<li><em>Zipf’s law states that the frequency that a word appears is inversely proportional to its rank</em></li>
+</ul>
+<p>Within a section, all words are given the rank based on their frequency of appearance, that is <em>rank</em>. Whereas term-frequency is ratio of frequency of term in particular section to total words in that section. There exists some inverse relationship between these two factors, which is stated by Zip.</p>
+<pre class="r"><code>selective_section_data &lt;- section_total_words %&gt;% 
+  filter(new_desk %in% c(&quot;Business&quot;,&quot;Washington&quot;,&quot;National&quot;,&quot;Opinion&quot;,&quot;NYTNow&quot;,&quot;Express&quot;,&quot;None&quot;,&quot;Culture&quot;,&quot;Learning&quot;,&quot;Metro&quot;)) %&gt;% 
+  group_by(new_desk) %&gt;% 
+  mutate(rank = row_number(), 
+         tf = n/total)
+
+theme_set(theme_bw())
+selective_section_data %&gt;% 
+  filter(new_desk %in% c(&quot;Business&quot;,&quot;Washington&quot;,&quot;National&quot;,&quot;Opinion&quot;,&quot;NYTNow&quot;,&quot;Express&quot;)) %&gt;% 
+  ggplot(aes(rank, tf, color = new_desk)) + 
+  geom_line(size = 1.1, alpha = 0.8, show.legend = FALSE) + 
+  labs(y = &quot;term - frequency&quot;) + 
+  scale_x_log10() +
+  scale_y_log10()</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-28-1.png" width="576" /></p>
+<p>From the graph, we see that Zipf’s law is valid throughout different sections.</p>
+<hr />
+</div>
+<div id="top-words-interms-of-tf-idf-across-sections" class="section level4">
+<h4>Top words interms of tf-idf across sections</h4>
+<pre class="r"><code>tf_idf_data &lt;- selective_section_data %&gt;%
+  bind_tf_idf(word, new_desk, n)
+
+tf_idf_data %&gt;%anti_join(data.frame(word = c(&quot;__&quot;,&quot;___&quot;,&quot;____&quot;,&quot;_____&quot;,&quot;---&quot;,&quot;----&quot;,&quot;&quot;,&quot; &quot;))) %&gt;% 
+  filter(new_desk %in% c(&quot;Business&quot;,&quot;Washington&quot;,&quot;National&quot;,&quot;Opinion&quot;,&quot;NYTNow&quot;,&quot;Express&quot;)) %&gt;% 
+  arrange(desc(tf_idf)) %&gt;%
+  # mutate(word = factor(word, levels = rev(unique(word)))) %&gt;%
+  group_by(new_desk) %&gt;% 
+  top_n(12) %&gt;% 
+  ggplot(aes(reorder(word, tf_idf),tf_idf, fill = new_desk)) +
+  geom_col(show.legend = FALSE) +
+  labs(x = NULL, y = &quot;tf-idf&quot;) +
+  facet_wrap(~new_desk, ncol = 2, scales = &quot;free&quot;) +
+  theme_bw() +
+  coord_flip() +
+  theme(strip.background = element_rect(fill = &quot;gray90&quot;))</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-29-1.png" width="864" /></p>
+<hr />
+</div>
+</div>
+<div id="relationships-between-words-n-grams-and-correlations" class="section level3">
+<h3>Relationships between words: N-grams and correlations</h3>
+<p>An N-gram is a contiguous sequence of N items from a given piece of text. The items can be phonemes, syllables, letters, words or base pairs according to the application. The N-grams typically are collected from a text or speech corpus.</p>
+<p>An N-gram of size 1 is referred to as a “unigram”; size 2 is a “bigram” (or, less commonly, a “digram”); size 3 is a “trigram” and so on.</p>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-30-1.png" width="672" /></p>
+<p>N-grams can also be used for efficient approximate matching. By converting a sequence of items to a set of N-grams, it can be embedded in a vector space, thus allowing the sequence to be compared to other sequences in an efficient manner.</p>
+<p>However, we know empirically that if two strings of real text have a similar vector representation (as measured by cosine distance) then they are likely to be similar.</p>
+<div id="n-gram-models" class="section level5">
+<h5>N-gram Models</h5>
+<p>Unigram model: <span class="math inline">\(P(w_1)P(w_2)...P(w_n)\)</span> <br /> Bigram model: <span class="math inline">\(P(w_1)P(w_2|w_1)P(w_3|w_2)...P(w_n|w_{n-1})\)</span> <br /> Trigram model: <span class="math inline">\(P(w_1)P(w_2|w_1)P(w_3|w_1,w_2)...P(w_n|w_{n-1},w_{n-2})\)</span> <br /> N-gram model: <span class="math inline">\(P(w_1)P(w_2|w_1)...P(w_n|w_{n-1},w_{n-2},...,w_{n-N+1})\)</span> <br /></p>
+<p>N-gram models: <a href="http://www.cs.virginia.edu/~kc2wc/teaching/NLP16/slides/02-ngram.pdf">refer</a></p>
+</div>
+<div id="analyzing-bigrams" class="section level4">
+<h4>Analyzing bigrams</h4>
+<pre class="r"><code>bigrams_data &lt;- mydata %&gt;%
+  unnest_tokens(bigram, article_body, token = &quot;ngrams&quot;, n = 2)
+
+bigrams_data %&gt;%
+  count(bigram,sort = TRUE) %&gt;% 
+  head(10) %&gt;% kable() %&gt;% kable_styling(bootstrap_options = &quot;striped&quot;, full_width = F, position = &quot;left&quot;)</code></pre>
+<table class="table table-striped" style="width: auto !important; ">
+<thead>
+<tr>
+<th style="text-align:left;">
+bigram
+</th>
+<th style="text-align:right;">
+n
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+of the
+</td>
+<td style="text-align:right;">
+3048
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+in the
+</td>
+<td style="text-align:right;">
+2505
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+to the
+</td>
+<td style="text-align:right;">
+1272
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+on the
+</td>
+<td style="text-align:right;">
+970
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+in a
+</td>
+<td style="text-align:right;">
+923
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+at the
+</td>
+<td style="text-align:right;">
+846
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+for the
+</td>
+<td style="text-align:right;">
+821
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+high school
+</td>
+<td style="text-align:right;">
+814
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+new york
+</td>
+<td style="text-align:right;">
+743
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+to be
+</td>
+<td style="text-align:right;">
+740
+</td>
+</tr>
+</tbody>
+</table>
+<p>As we see the most occuring words are stopwords, so it is better to remove such bigrams where either or both of its words are stopwords.</p>
+<pre class="r"><code>bigrams_separated &lt;- bigrams_data %&gt;%
+  separate(bigram, c(&quot;word1&quot;, &quot;word2&quot;), sep = &quot; &quot;) # Split the column
+
+bigrams_filtered &lt;- bigrams_separated %&gt;% # remove stopwords
+  filter(!word1 %in% stop_words$word &amp;
+           !word1 %in% unique(unlist(str_extract_all(bigrams_separated$word1,pattern = one_or_more(UGC_CONNECTOR_PUNCTUATION))))) %&gt;%
+  filter(!word2 %in% stop_words$word &amp;
+           !word2 %in% unique(unlist(str_extract_all(bigrams_separated$word1,pattern = one_or_more(UGC_CONNECTOR_PUNCTUATION)))))
+
+# new bigram counts:
+bigrams_filtered %&gt;% 
+  count(word1, word2, sort = TRUE) %&gt;% 
+  head(10) %&gt;% kable() %&gt;% kable_styling(bootstrap_options = &quot;striped&quot;, full_width = F, position = &quot;left&quot;)</code></pre>
+<table class="table table-striped" style="width: auto !important; ">
+<thead>
+<tr>
+<th style="text-align:left;">
+word1
+</th>
+<th style="text-align:left;">
+word2
+</th>
+<th style="text-align:right;">
+n
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+gun
+</td>
+<td style="text-align:left;">
+control
+</td>
+<td style="text-align:right;">
+566
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+stoneman
+</td>
+<td style="text-align:left;">
+douglas
+</td>
+<td style="text-align:right;">
+485
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+parkland
+</td>
+<td style="text-align:left;">
+fla
+</td>
+<td style="text-align:right;">
+421
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+gun
+</td>
+<td style="text-align:left;">
+violence
+</td>
+<td style="text-align:right;">
+352
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+school
+</td>
+<td style="text-align:left;">
+shooting
+</td>
+<td style="text-align:right;">
+306
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+marjory
+</td>
+<td style="text-align:left;">
+stoneman
+</td>
+<td style="text-align:right;">
+281
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+president
+</td>
+<td style="text-align:left;">
+trump
+</td>
+<td style="text-align:right;">
+244
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ar
+</td>
+<td style="text-align:left;">
+15
+</td>
+<td style="text-align:right;">
+241
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+white
+</td>
+<td style="text-align:left;">
+house
+</td>
+<td style="text-align:right;">
+241
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+york
+</td>
+<td style="text-align:left;">
+times
+</td>
+<td style="text-align:right;">
+237
+</td>
+</tr>
+</tbody>
+</table>
+<p>Now this makes sense, as all stopwords are removed. Letus reunite those two words of bigram</p>
+<pre class="r"><code>bigrams_united &lt;- bigrams_filtered %&gt;%
+  unite(bigram, word1, word2, sep = &quot; &quot;)
+
+bigrams_united %&gt;% head(10) %&gt;% kable() %&gt;% kable_styling(bootstrap_options = &quot;striped&quot;, full_width = F, position = &quot;left&quot;)</code></pre>
+<table class="table table-striped" style="width: auto !important; ">
+<thead>
+<tr>
+<th style="text-align:left;">
+new_desk
+</th>
+<th style="text-align:right;">
+artcle_no
+</th>
+<th style="text-align:left;">
+pub_date
+</th>
+<th style="text-align:right;">
+score
+</th>
+<th style="text-align:left;">
+day
+</th>
+<th style="text-align:left;">
+bigram
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Arts&amp;Leisure
+</td>
+<td style="text-align:right;">
+492
+</td>
+<td style="text-align:left;">
+2018-04-18
+</td>
+<td style="text-align:right;">
+0.0008733
+</td>
+<td style="text-align:left;">
+Wednesday
+</td>
+<td style="text-align:left;">
+heart attack
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Arts&amp;Leisure
+</td>
+<td style="text-align:right;">
+492
+</td>
+<td style="text-align:left;">
+2018-04-18
+</td>
+<td style="text-align:right;">
+0.0008733
+</td>
+<td style="text-align:left;">
+Wednesday
+</td>
+<td style="text-align:left;">
+question mark
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Arts&amp;Leisure
+</td>
+<td style="text-align:right;">
+492
+</td>
+<td style="text-align:left;">
+2018-04-18
+</td>
+<td style="text-align:right;">
+0.0008733
+</td>
+<td style="text-align:left;">
+Wednesday
+</td>
+<td style="text-align:left;">
+dream role
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Arts&amp;Leisure
+</td>
+<td style="text-align:right;">
+492
+</td>
+<td style="text-align:left;">
+2018-04-18
+</td>
+<td style="text-align:right;">
+0.0008733
+</td>
+<td style="text-align:left;">
+Wednesday
+</td>
+<td style="text-align:left;">
+role he’s
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Arts&amp;Leisure
+</td>
+<td style="text-align:right;">
+492
+</td>
+<td style="text-align:left;">
+2018-04-18
+</td>
+<td style="text-align:right;">
+0.0008733
+</td>
+<td style="text-align:left;">
+Wednesday
+</td>
+<td style="text-align:left;">
+childhood picasso
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Arts&amp;Leisure
+</td>
+<td style="text-align:right;">
+492
+</td>
+<td style="text-align:left;">
+2018-04-18
+</td>
+<td style="text-align:right;">
+0.0008733
+</td>
+<td style="text-align:left;">
+Wednesday
+</td>
+<td style="text-align:left;">
+natgeo’s genius
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Arts&amp;Leisure
+</td>
+<td style="text-align:right;">
+492
+</td>
+<td style="text-align:left;">
+2018-04-18
+</td>
+<td style="text-align:right;">
+0.0008733
+</td>
+<td style="text-align:left;">
+Wednesday
+</td>
+<td style="text-align:left;">
+taffy brodesser
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Arts&amp;Leisure
+</td>
+<td style="text-align:right;">
+492
+</td>
+<td style="text-align:left;">
+2018-04-18
+</td>
+<td style="text-align:right;">
+0.0008733
+</td>
+<td style="text-align:left;">
+Wednesday
+</td>
+<td style="text-align:left;">
+brodesser aknerapril
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Arts&amp;Leisure
+</td>
+<td style="text-align:right;">
+492
+</td>
+<td style="text-align:left;">
+2018-04-18
+</td>
+<td style="text-align:right;">
+0.0008733
+</td>
+<td style="text-align:left;">
+Wednesday
+</td>
+<td style="text-align:left;">
+aknerapril 18
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Arts&amp;Leisure
+</td>
+<td style="text-align:right;">
+492
+</td>
+<td style="text-align:left;">
+2018-04-18
+</td>
+<td style="text-align:right;">
+0.0008733
+</td>
+<td style="text-align:left;">
+Wednesday
+</td>
+<td style="text-align:left;">
+18 2018
+</td>
+</tr>
+</tbody>
+</table>
+<p><br /></p>
+</div>
+<div id="what-are-words-with-parkland-and-gun" class="section level4">
+<h4>What are words with <code>parkland</code> and <code>gun</code>?</h4>
+<pre class="r"><code>t1 &lt;- bigrams_filtered %&gt;%
+  filter(word2 == &quot;parkland&quot;) %&gt;%
+  count(new_desk, word1,word2, sort = TRUE) %&gt;% 
+  head(12)# %&gt;% kable(format=&#39;html&#39;, table.attr=&#39;cellpadding=&quot;3&quot;&#39;, output = FALSE) %&gt;% kable_styling(bootstrap_options = &quot;striped&quot;, full_width = F)
+
+t2 &lt;- bigrams_filtered %&gt;%
+  filter(word2 == &quot;gun&quot;) %&gt;%
+  count(new_desk, word1,word2, sort = TRUE) %&gt;% 
+  head(12)# %&gt;% kable(format=&#39;html&#39;, table.attr=&#39;cellpadding=&quot;3&quot;&#39;, output = FALSE) %&gt;% kable_styling(bootstrap_options = &quot;striped&quot;, full_width = F) #, position = &quot;float_right&quot;
+
+grid.arrange(tableGrob(t1), tableGrob(t2), ncol = 2)</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-34-1.png" width="672" /></p>
+<hr />
+</div>
+<div id="bigram-tf-idf-score" class="section level4">
+<h4>Bigram tf-idf score</h4>
+<p>Like unigrams, we can compute <strong>tf-idf</strong> score for bigrams also it is possible to calculate <strong>tf-idf</strong> score.</p>
+<pre class="r"><code>bigram_tf_idf &lt;- bigrams_united %&gt;% # it is already free from stopwords
+  count(new_desk, bigram) %&gt;%
+  bind_tf_idf(bigram, new_desk, n) %&gt;%
+  arrange(desc(tf_idf))
+
+bigram_tf_idf %&gt;% head(10) %&gt;% kable() %&gt;% kable_styling(bootstrap_options = &quot;striped&quot;, full_width = F, position = &quot;left&quot;)</code></pre>
+<table class="table table-striped" style="width: auto !important; ">
+<thead>
+<tr>
+<th style="text-align:left;">
+new_desk
+</th>
+<th style="text-align:left;">
+bigram
+</th>
+<th style="text-align:right;">
+n
+</th>
+<th style="text-align:right;">
+tf
+</th>
+<th style="text-align:right;">
+idf
+</th>
+<th style="text-align:right;">
+tf_idf
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Summary
+</td>
+<td style="text-align:left;">
+page a3
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+0.0491803
+</td>
+<td style="text-align:right;">
+3.433987
+</td>
+<td style="text-align:right;">
+0.1688846
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SpecialSections
+</td>
+<td style="text-align:left;">
+pop ups
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+0.0349345
+</td>
+<td style="text-align:right;">
+3.433987
+</td>
+<td style="text-align:right;">
+0.1199646
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Summary
+</td>
+<td style="text-align:left;">
+headline quote
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.0327869
+</td>
+<td style="text-align:right;">
+3.433987
+</td>
+<td style="text-align:right;">
+0.1125897
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Summary
+</td>
+<td style="text-align:left;">
+quote appears
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+0.0327869
+</td>
+<td style="text-align:right;">
+3.433987
+</td>
+<td style="text-align:right;">
+0.1125897
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Weekend
+</td>
+<td style="text-align:left;">
+dear evan
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+0.0273973
+</td>
+<td style="text-align:right;">
+3.433987
+</td>
+<td style="text-align:right;">
+0.0940818
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Weekend
+</td>
+<td style="text-align:left;">
+evan hansen
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+0.0273973
+</td>
+<td style="text-align:right;">
+3.433987
+</td>
+<td style="text-align:right;">
+0.0940818
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Podcasts
+</td>
+<td style="text-align:left;">
+flash briefing
+</td>
+<td style="text-align:right;">
+24
+</td>
+<td style="text-align:right;">
+0.0247678
+</td>
+<td style="text-align:right;">
+3.433987
+</td>
+<td style="text-align:right;">
+0.0850523
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Podcasts
+</td>
+<td style="text-align:left;">
+mobile device
+</td>
+<td style="text-align:right;">
+24
+</td>
+<td style="text-align:right;">
+0.0247678
+</td>
+<td style="text-align:right;">
+3.433987
+</td>
+<td style="text-align:right;">
+0.0850523
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Climate
+</td>
+<td style="text-align:left;">
+climate change
+</td>
+<td style="text-align:right;">
+18
+</td>
+<td style="text-align:right;">
+0.0600000
+</td>
+<td style="text-align:right;">
+1.354546
+</td>
+<td style="text-align:right;">
+0.0812727
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NewsDesk
+</td>
+<td style="text-align:left;">
+school received
+</td>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:right;">
+0.0273556
+</td>
+<td style="text-align:right;">
+2.740840
+</td>
+<td style="text-align:right;">
+0.0749774
+</td>
+</tr>
+</tbody>
+</table>
+<p>The td_idf is high for these words, which appeared in rare sections of newspaper (i.e. Summary, SpecialSection, Weekend).</p>
+<pre class="r"><code>bigram_tf_idf %&gt;% 
+  # anti_join(data.frame(word = c(&quot;__&quot;,&quot;___&quot;,&quot;____&quot;,&quot;_____&quot;,&quot;---&quot;,&quot;----&quot;,&quot;-----&quot;,&quot;&quot;,&quot; &quot;)),by= c(&#39;bigram&#39;=&#39;word&#39;)) %&gt;% 
+  filter(new_desk %in% c(&quot;Business&quot;,&quot;Washington&quot;,&quot;National&quot;,&quot;Opinion&quot;,&quot;NYTNow&quot;,&quot;Express&quot;)) %&gt;% 
+  arrange(desc(tf_idf)) %&gt;%
+  # mutate(word = factor(word, levels = rev(unique(word)))) %&gt;%
+  group_by(new_desk) %&gt;% 
+  top_n(12) %&gt;% 
+  ggplot(aes(reorder(bigram, tf_idf),tf_idf, fill = new_desk)) +
+  geom_col(show.legend = FALSE) +
+  labs(x = NULL, y = &quot;tf-idf&quot;) +
+  facet_wrap(~new_desk, ncol = 2, scales = &quot;free&quot;) +
+  theme_bw() +
+  theme(strip.background = element_rect(fill = &quot;gray90&quot;),
+        strip.text = element_text(size = 9),
+        axis.text = element_text(size = 9)) +
+  coord_flip()</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-36-1.png" width="864" /></p>
+<hr />
+<p><br /></p>
+</div>
+<div id="negative-words-contributed-to-positive-sentiment-and-vice-versa---unigram-vs-bigram" class="section level4">
+<h4>Negative words contributed to positive sentiment and vice-versa -&gt; unigram vs bigram</h4>
+<p>There are many cases where a bigram with first word being <strong>negative</strong> (e.g <strong>not good, never killed</strong>, etc). In such cases the unigram analysis seems to be week approach. So here are some bigrams with first word being negative and to what extent they would contributed to reverse sentiment if unigram approach is used is shown in below figure.</p>
+<pre class="r"><code>AFINN &lt;- get_sentiments(&quot;afinn&quot;)
+negation_words &lt;- c(&quot;not&quot;, &quot;no&quot;, &quot;never&quot;, &quot;without&quot;,&quot;don&#39;t&quot;)
+
+negated_words &lt;- bigrams_separated %&gt;% 
+  select(-score) %&gt;% 
+  filter(word1 %in% negation_words) %&gt;%
+  inner_join(AFINN, by = c(word2 = &quot;word&quot;)) %&gt;%
+  count(new_desk,word1, word2, score=value, sort = TRUE) %&gt;%
+  filter(new_desk %in% c(&quot;Business&quot;,&quot;Washington&quot;,&quot;National&quot;,&quot;Opinion&quot;,&quot;NYTNow&quot;,&quot;Express&quot;)) %&gt;% 
+  ungroup()
+
+dp &lt;- negated_words %&gt;% 
+  mutate(contribution = n * score) %&gt;%
+  arrange(desc(abs(contribution))) %&gt;%
+  group_by(new_desk) %&gt;% 
+  top_n(12,wt = abs(contribution)) %&gt;%
+  ungroup() %&gt;% 
+  mutate(nv = paste(word1,word2)) %&gt;% 
+  arrange(new_desk,contribution) %&gt;% # head(10)
+  mutate(order = row_number())
+  
+  dp %&gt;% ggplot(aes(order,contribution, fill = contribution &gt; 0)) +
+    geom_col(show.legend = FALSE,stat = &quot;identity&quot;) +
+    xlab(&quot;Words preceded by \&quot;negations\&quot;&quot;) +
+    ylab(&quot;Sentiment score * number of occurrences&quot;) +
+    facet_wrap(~new_desk,ncol=2,scales = &quot;free&quot;) +
+    theme_gray() +
+    theme(strip.background = element_rect(fill = &quot;#DCDCDC&quot;),
+          strip.text = element_text(size = 9),
+          axis.text = element_text(size = 8),
+          axis.ticks = element_blank(),
+          panel.grid = element_blank(),
+          plot.background = element_rect(fill = &quot;gray94&quot;)) +
+    scale_x_continuous(
+      breaks = dp$order,
+      labels = dp$nv,
+      expand = c(0,0)
+      ) +
+    coord_flip()</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-37-1.png" width="864" /></p>
+<p>These bigrams when considered in unigrams (without those negations) contributed as reverse sentiment to the news in different sections</p>
+<hr />
+</div>
+</div>
+<div id="network-of-bigrams" class="section level3">
+<h3>Network of bigrams</h3>
+<p>In a bigram, out of two words, sometimes one or both may be appeared with some other words. So it would be interesting to know if there is network of links between many words along with their strength (frequency).</p>
+<pre class="r"><code>library(igraph)
+bigram_graph &lt;- bigrams_filtered %&gt;%
+  count(word1,word2,sort = TRUE) %&gt;% 
+  filter(n &gt; 50) %&gt;%
+  graph_from_data_frame()
+
+bigram_graph</code></pre>
+<pre><code>IGRAPH a5ed346 DN-- 97 66 -- 
++ attr: name (v/c), n (e/n)
++ edges from a5ed346 (vertex names):
+ [1] gun       -&gt;control     stoneman  -&gt;douglas     parkland  -&gt;fla        
+ [4] gun       -&gt;violence    school    -&gt;shooting    marjory   -&gt;stoneman   
+ [7] president -&gt;trump       ar        -&gt;15          white     -&gt;house      
+[10] york      -&gt;times       social    -&gt;media       17        -&gt;people     
+[13] mass      -&gt;shooting    mass      -&gt;shootings   paper     -&gt;subscribe  
+[16] today&#39;s   -&gt;paper       law       -&gt;enforcement reprints  -&gt;today&#39;s    
+[19] york      -&gt;edition     article   -&gt;appears     mental    -&gt;health     
+[22] national  -&gt;rifle       background-&gt;checks      rifle     -&gt;association
++ ... omitted several edges</code></pre>
+<pre class="r"><code>set.seed(11)
+library(ggraph)
+
+a &lt;- grid::arrow(type = &quot;closed&quot;, length = unit(.12, &quot;inches&quot;))
+
+ggraph(bigram_graph, layout = &quot;fr&quot;) + #,algorithm = &#39;nicely&#39;
+  geom_edge_link(aes(edge_alpha = n), show.legend = FALSE,
+                 arrow = a, end_cap = circle(.06, &#39;inches&#39;)) +
+  geom_node_point(color = &quot;lightblue&quot;, size = 5) +
+  geom_node_text(aes(label = name), vjust = 1, hjust = 1) +
+  theme_void()</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-39-1.png" width="864" style="display: block; margin: auto;" /></p>
+<p>For example, if we take the word <strong>gun</strong>, which is linked to many other words in respective bigrams with different nuber of times. Most of the times it appeared with <strong>control</strong> then after <strong>violence, laws, owners, restrictions, rights, safety</strong>. Again <strong>control</strong> is connected to <strong>measures</strong> in another bigram. Like this we can see some other patterns in above network diagram.</p>
+<hr />
+</div>
+<div id="count-of-word-pairs-in-each-article-using-widyr-package" class="section level3">
+<h3>Count of word pairs in each article using <code>widyr</code> package</h3>
+<p>The widyr package makes operations such as computing counts and correlations easy, by simplifying the pattern of “widen data, perform an operation, then re-tidy data”</p>
+<p>Now we are going to see which two words (need not be adjacent) appeared frequently in each article of <em>National</em> and <em>Washington</em> sections respectively.</p>
+<pre class="r"><code>word_pairs_National &lt;- tidy1 %&gt;% 
+  filter(new_desk == &quot;National&quot;) %&gt;%
+  filter(!word %in% stop_words$word) %&gt;% 
+  pairwise_count(word, artcle_no, sort = TRUE)</code></pre>
+<pre class="r"><code>df = word_pairs_National %&gt;% head(50)
+
+for(i in 1:50){
+  for(j in 1:50){
+    if(df$item1[i] == df$item2[j] &amp; df$item1[j] == df$item2[i] &amp; df[j,1] != &quot;a&quot;){
+      df[j,] = &quot;a&quot;
+    }
+      
+  }
+}
+df$n = as.integer(df$n)
+df = df %&gt;% filter(item1 != &quot;a&quot;)
+
+theme_set(theme_bw())
+df %&gt;%
+  ggplot(aes(reorder(paste(item1,item2,sep = &quot;-&quot;),n),n)) +
+  # geom_col(fill = &quot;#9DB1D3&quot;,width = 0.7) +
+  geom_point(shape = 23,fill = &quot;#7F9FDF&quot;,color = &quot;#7F9FDF&quot;,size = 3.5) +
+  geom_segment(aes(xend = reorder(paste(item1,item2,sep = &quot;-&quot;),n), yend = 0),size = 4, color = &quot;#7F9FDF&quot;) +#lineend = &quot;square&quot;,
+  labs(x = &quot;Pair of words&quot;,title = &quot;Section - National&quot;) +
+  scale_y_continuous(expand = c(0,0),limits = c(0,100)) +
+  theme(plot.title = element_text(vjust = 0.5,hjust = 0.5),axis.ticks.y = element_blank()) +
+  coord_flip()</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-41-1.png" width="672" /></p>
+<p>As we see here, most of the words in bigram are among <em>shooting</em>,<em>school</em>,<em>gun</em> and <em>parkland</em>. Let us see which are the other words appeared with these dominant words in <strong>National</strong> section</p>
+<hr />
+<pre class="r"><code>theme_set(theme_bw())
+set.seed(55)
+g = function(df){
+  df %&gt;% 
+    ggplot(aes(reorder(item2,n),n)) +
+    geom_col(fill = sample(c(&quot;#C59DD3&quot;,&#39;#9999ff&#39;,&#39;#ff66ff&#39;,&#39;#ffe066&#39;,&#39;#59b300&#39;,&#39;#20db96&#39;,&#39;#e0821d&#39;),
+                           size = 1,replace = FALSE),width = 0.5) + 
+    theme(axis.text.x = element_text(hjust = -0.01),
+          axis.ticks.y = element_blank(),
+          plot.margin = rep(unit(0,&quot;null&quot;),4),
+          panel.margin = unit(0,&quot;null&quot;)) +
+    labs(x = &quot;&quot;,y = &quot;&quot;) +
+    scale_y_continuous(expand = c(0,0),limits = c(0,100)) +
+    coord_flip()
+  }
+
+df &lt;-  word_pairs_National %&gt;% 
+  filter(item1 ==&quot;shooting&quot;) %&gt;% 
+  arrange(desc(n)) %&gt;% 
+  head(20)
+
+for(i in 1:20){
+  for(j in 1:20){
+    if(df$item1[i] == df$item2[j] &amp; df$item1[j] == df$item2[i] &amp; df[j,1] != &quot;a&quot;){
+      df[j,] = &quot;a&quot;
+    }
+      
+  }
+}
+
+df$n = as.integer(df$n)
+df = df %&gt;% filter(item1 != &quot;a&quot;)
+g1 = g(df) + labs(title = &quot;Shooting&quot;) + theme(plot.title = element_text(vjust = 0.5, hjust = 0.5,size = 9))
+
+df &lt;-  word_pairs_National %&gt;% 
+  filter(item1 ==&quot;parkland&quot;) %&gt;% 
+  arrange(desc(n)) %&gt;% 
+  head(20)
+
+for(i in 1:20){
+  for(j in 1:20){
+    if(df$item1[i] == df$item2[j] &amp; df$item1[j] == df$item2[i] &amp; df[j,1] != &quot;a&quot;){
+      df[j,] = &quot;a&quot;
+    }
+      
+  }
+}
+
+df$n = as.integer(df$n)
+df = df %&gt;% filter(item1 != &quot;a&quot;)
+g2 = g(df) + labs(title = &quot;Parkland&quot;) + theme(plot.title = element_text(vjust = 0.5, hjust = 0.5,size = 9))
+
+df &lt;-  word_pairs_National %&gt;% 
+  filter(item1 ==&quot;gun&quot;) %&gt;% 
+  arrange(desc(n)) %&gt;% 
+  head(20)
+
+for(i in 1:20){
+  for(j in 1:20){
+    if(df$item1[i] == df$item2[j] &amp; df$item1[j] == df$item2[i] &amp; df[j,1] != &quot;a&quot;){
+      df[j,] = &quot;a&quot;
+    }
+      
+  }
+}
+
+df$n = as.integer(df$n)
+df = df %&gt;% filter(item1 != &quot;a&quot;)
+g3 = g(df) + labs(title = &quot;Gun&quot;) + theme(plot.title = element_text(vjust = 0.5, hjust = 0.5,size = 9))
+
+df &lt;-  word_pairs_National %&gt;% 
+  filter(item1 ==&quot;school&quot;) %&gt;% 
+  arrange(desc(n)) %&gt;% 
+  head(20)
+
+for(i in 1:20){
+  for(j in 1:20){
+    if(df$item1[i] == df$item2[j] &amp; df$item1[j] == df$item2[i] &amp; df[j,1] != &quot;a&quot;){
+      df[j,] = &quot;a&quot;
+    }
+      
+  }
+}
+
+df$n = as.integer(df$n)
+df = df %&gt;% filter(item1 != &quot;a&quot;)
+g4 = g(df) + labs(title = &quot;school&quot;) + theme(plot.title = element_text(vjust = 0.5, hjust = 0.5,size = 9))
+
+gridExtra::grid.arrange(grobs = list(g3,g1,g2,g4))</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-42-1.png" width="864" /></p>
+<hr />
+<div id="sankey-diagram" class="section level4">
+<h4>Sankey diagram</h4>
+<pre class="r"><code>op &lt;- options(gvis.plot.tag = &#39;chart&#39;)
+
+df1 = word_pairs_National %&gt;% head(40)
+
+for(i in 1:40){
+  for(j in 1:40){
+    if(df1$item1[i] == df1$item2[j] &amp; df1$item1[j] == df1$item2[i] &amp; df1[j,1] != &quot;a&quot;){
+      df1[j,] = &quot;a&quot;
+    }
+      
+  }
+}
+df1$n = as.integer(df1$n)
+
+df1 = df1 %&gt;% filter(item1 != &quot;a&quot;)
+
+g1 &lt;- gvisSankey(df1, from=&quot;item1&quot;,
+           to=&quot;item2&quot;, weight=&quot;n&quot;,
+           options=list(
+             height=500,width = 900,
+             sankey=&quot;{link: { colorMode: &#39;gradient&#39;,
+              colors: [&#39;#a6cee3&#39;, &#39;#b2df8a&#39;, &#39;#fb9a99&#39;, &#39;#fdbf6f&#39;, &#39;#cab2d6&#39;, &#39;#F7E850&#39;],color: { stroke: &#39;#ABB2B9&#39;}}, 
+                    node: { colors: [&#39;#a6cee3&#39;, &#39;#b2df8a&#39;, &#39;#fb9a99&#39;, &#39;#fdbf6f&#39;, &#39;#cab2d6&#39;, &#39;#F7E850&#39;], nodePadding: &#39;100&#39; ,
+             label: { fontName: &#39;Times-Roman&#39;,
+                                         fontSize: 20,
+                                         color: &#39;#871b47&#39;,
+                                         bold: true,
+                                         italic: true }}}&quot;,
+             # title=&quot;Frequency of words appearing in each article of &#39;National&#39; section of NYT&quot;,
+             titleTextStyle=&quot;{color:&#39;purple&#39;, fontName:&#39;Courier&#39;, fontSize:16}&quot;,
+             backgroundColor=&quot;#D3D3D3&quot;
+             ))
+# &#39;#a6cee3&#39;, &#39;#b2df8a&#39;, &#39;#fb9a99&#39;, &#39;#fdbf6f&#39;, &#39;#cab2d6&#39;, &#39;#F7E850&#39;
+# &#39;blue&#39;, &#39;orange&#39;, &#39;green&#39;,&#39;purple&#39;
+print(g1,&#39;chart&#39;)</code></pre>
+<!-- Sankey generated in R 3.6.2 by googleVis 0.6.4 package -->
+<!-- Sat Jan 25 04:32:45 2020 -->
+<!-- jsHeader -->
+<script type="text/javascript">
+ 
+// jsData 
+function gvisDataSankeyID13bc75658c3 () {
+var data = new google.visualization.DataTable();
+var datajson =
+[
+ [
+"shooting",
+"school",
+93
+],
+[
+"parkland",
+"school",
+90
+],
+[
+"people",
+"school",
+90
+],
+[
+"shooting",
+"parkland",
+88
+],
+[
+"people",
+"shooting",
+87
+],
+[
+"student",
+"school",
+86
+],
+[
+"school",
+"2018",
+84
+],
+[
+"fla",
+"school",
+84
+],
+[
+"people",
+"parkland",
+84
+],
+[
+"student",
+"shooting",
+84
+],
+[
+"17",
+"school",
+82
+],
+[
+"gun",
+"school",
+82
+],
+[
+"people",
+"student",
+82
+],
+[
+"shooting",
+"2018",
+81
+],
+[
+"fla",
+"parkland",
+81
+],
+[
+"student",
+"parkland",
+81
+],
+[
+"shooting",
+"fla",
+81
+],
+[
+"gun",
+"shooting",
+81
+],
+[
+"gun",
+"parkland",
+80
+],
+[
+"17",
+"shooting",
+80
+] 
+];
+data.addColumn('string','item1');
+data.addColumn('string','item2');
+data.addColumn('number','n');
+data.addRows(datajson);
+return(data);
+}
+ 
+// jsDrawChart
+function drawChartSankeyID13bc75658c3() {
+var data = gvisDataSankeyID13bc75658c3();
+var options = {};
+options["width"] = 900;
+options["height"] = 500;
+options["sankey"] = {link: { colorMode: 'gradient',
+              colors: ['#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6', '#F7E850'],color: { stroke: '#ABB2B9'}}, 
+                    node: { colors: ['#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6', '#F7E850'], nodePadding: '100' ,
+             label: { fontName: 'Times-Roman',
+                                         fontSize: 20,
+                                         color: '#871b47',
+                                         bold: true,
+                                         italic: true }}};
+options["titleTextStyle"] = {color:'purple', fontName:'Courier', fontSize:16};
+options["backgroundColor"] = "#D3D3D3";
+
+    var chart = new google.visualization.Sankey(
+    document.getElementById('SankeyID13bc75658c3')
+    );
+    chart.draw(data,options);
+    
+
+}
+  
+ 
+// jsDisplayChart
+(function() {
+var pkgs = window.__gvisPackages = window.__gvisPackages || [];
+var callbacks = window.__gvisCallbacks = window.__gvisCallbacks || [];
+var chartid = "sankey";
+  
+// Manually see if chartid is in pkgs (not all browsers support Array.indexOf)
+var i, newPackage = true;
+for (i = 0; newPackage && i < pkgs.length; i++) {
+if (pkgs[i] === chartid)
+newPackage = false;
+}
+if (newPackage)
+  pkgs.push(chartid);
+  
+// Add the drawChart function to the global list of callbacks
+callbacks.push(drawChartSankeyID13bc75658c3);
+})();
+function displayChartSankeyID13bc75658c3() {
+  var pkgs = window.__gvisPackages = window.__gvisPackages || [];
+  var callbacks = window.__gvisCallbacks = window.__gvisCallbacks || [];
+  window.clearTimeout(window.__gvisLoad);
+  // The timeout is set to 100 because otherwise the container div we are
+  // targeting might not be part of the document yet
+  window.__gvisLoad = setTimeout(function() {
+  var pkgCount = pkgs.length;
+  google.load("visualization", "1", { packages:pkgs, callback: function() {
+  if (pkgCount != pkgs.length) {
+  // Race condition where another setTimeout call snuck in after us; if
+  // that call added a package, we must not shift its callback
+  return;
+}
+while (callbacks.length > 0)
+callbacks.shift()();
+} });
+}, 100);
+}
+ 
+// jsFooter
+</script>
+<!-- jsChart -->
+<script type="text/javascript" src="https://www.google.com/jsapi?callback=displayChartSankeyID13bc75658c3"></script>
+<!-- divChart -->
+<div id="SankeyID13bc75658c3" style="width: 900; height: 500;">
+
+</div>
+<p>Sankey digram represents how different words in bigram are interconnected directly or indirectly through a flow view.</p>
+<hr />
+<pre class="r"><code>word_pairs_Washington &lt;- tidy1 %&gt;% 
+  filter(new_desk == &quot;Washington&quot;) %&gt;%
+  filter(!word %in% stop_words$word) %&gt;% 
+  pairwise_count(word, artcle_no, sort = TRUE)</code></pre>
+<pre class="r"><code>df = word_pairs_Washington %&gt;% head(50)
+
+for(i in 1:50){
+  for(j in 1:50){
+    if(df$item1[i] == df$item2[j] &amp; df$item1[j] == df$item2[i] &amp; df[j,1] != &quot;a&quot;){
+      df[j,] = &quot;a&quot;
+    }
+      
+  }
+}
+df$n = as.integer(df$n)
+df = df %&gt;% filter(item1 != &quot;a&quot;)
+
+theme_set(theme_bw())
+df %&gt;%
+  ggplot(aes(reorder(paste(item1,item2,sep = &quot;-&quot;),n),n)) +
+  # geom_col(fill = &quot;#9DB1D3&quot;,width = 0.7) +
+  geom_point(shape = 23,fill = &quot;#E59866&quot;,color = &quot;#E59866&quot;,size = 3.5) +
+  geom_segment(aes(xend = reorder(paste(item1,item2,sep = &quot;-&quot;),n), yend = 0),size = 4, color = &quot;#E59866&quot;) +
+  labs(x = &quot;Pair of words&quot;,title = &quot;Section - Washington&quot;) +
+  theme(plot.title = element_text(hjust = 0.5,vjust = 0.5),axis.ticks.y = element_blank()) +
+  scale_y_continuous(expand = c(0,0),limits = c(0,100)) +
+  coord_flip()</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-45-1.png" width="672" /></p>
+<p>As we see here, most of the words in bigram are among <em>school</em>,<em>fla</em>,<em>trump</em> and <em>parkland</em>. Let us see which are the other words appeared with these dominant words in <strong>Washington</strong> section</p>
+<hr />
+<pre class="r"><code>theme_set(theme_bw())
+set.seed(55)
+g = function(df){
+  df %&gt;% 
+    ggplot(aes(reorder(item2,n),n)) +
+    geom_col(fill = sample(c(&quot;#C59DD3&quot;,&#39;#9999ff&#39;,&#39;#ff66ff&#39;,&#39;#ffe066&#39;,&#39;#59b300&#39;,&#39;#20db96&#39;,&#39;#e0821d&#39;),
+                           size = 1,replace = FALSE),width = 0.5) + 
+    theme(axis.text.x = element_text(hjust = -0.01),
+          axis.ticks.y = element_blank(),
+          plot.margin = rep(unit(0,&quot;null&quot;),4),
+          panel.margin = unit(0,&quot;null&quot;)) +
+    labs(x = &quot;&quot;,y = &quot;&quot;) +
+    scale_y_continuous(expand = c(0,0),limits = c(0,60)) +
+    coord_flip()
+  }
+
+df &lt;-  word_pairs_Washington %&gt;% 
+  filter(item1 ==&quot;trump&quot;) %&gt;% 
+  arrange(desc(n)) %&gt;% 
+  head(20)
+
+for(i in 1:20){
+  for(j in 1:20){
+    if(df$item1[i] == df$item2[j] &amp; df$item1[j] == df$item2[i] &amp; df[j,1] != &quot;a&quot;){
+      df[j,] = &quot;a&quot;
+    }
+      
+  }
+}
+
+df$n = as.integer(df$n)
+df = df %&gt;% filter(item1 != &quot;a&quot;)
+g1 = g(df) + labs(title = &quot;Trump&quot;) + theme(plot.title = element_text(vjust = 0.5, hjust = 0.5,size = 9))
+
+df &lt;-  word_pairs_Washington %&gt;% 
+  filter(item1 ==&quot;parkland&quot;) %&gt;% 
+  arrange(desc(n)) %&gt;% 
+  head(20)
+
+for(i in 1:20){
+  for(j in 1:20){
+    if(df$item1[i] == df$item2[j] &amp; df$item1[j] == df$item2[i] &amp; df[j,1] != &quot;a&quot;){
+      df[j,] = &quot;a&quot;
+    }
+      
+  }
+}
+
+df$n = as.integer(df$n)
+df = df %&gt;% filter(item1 != &quot;a&quot;)
+g2 = g(df) + labs(title = &quot;Parkland&quot;) + theme(plot.title = element_text(vjust = 0.5, hjust = 0.5,size = 9))
+
+df &lt;-  word_pairs_Washington %&gt;% 
+  filter(item1 ==&quot;school&quot;) %&gt;% 
+  arrange(desc(n)) %&gt;% 
+  head(20)
+
+for(i in 1:20){
+  for(j in 1:20){
+    if(df$item1[i] == df$item2[j] &amp; df$item1[j] == df$item2[i] &amp; df[j,1] != &quot;a&quot;){
+      df[j,] = &quot;a&quot;
+    }
+      
+  }
+}
+
+df$n = as.integer(df$n)
+df = df %&gt;% filter(item1 != &quot;a&quot;)
+g3 = g(df) + labs(title = &quot;School&quot;) + theme(plot.title = element_text(vjust = 0.5, hjust = 0.5,size = 9))
+
+df &lt;-  word_pairs_Washington %&gt;% 
+  filter(item1 ==&quot;fla&quot;) %&gt;% 
+  arrange(desc(n)) %&gt;% 
+  head(20)
+
+for(i in 1:20){
+  for(j in 1:20){
+    if(df$item1[i] == df$item2[j] &amp; df$item1[j] == df$item2[i] &amp; df[j,1] != &quot;a&quot;){
+      df[j,] = &quot;a&quot;
+    }
+      
+  }
+}
+
+df$n = as.integer(df$n)
+df = df %&gt;% filter(item1 != &quot;a&quot;)
+g4 = g(df) + labs(title = &quot;fla&quot;) + theme(plot.title = element_text(vjust = 0.5, hjust = 0.5,size = 9))
+
+gridExtra::grid.arrange(grobs = list(g3,g1,g2,g4))</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-46-1.png" width="864" /></p>
+<hr />
+</div>
+<div id="word-pair-network-diagram-of-frequently-appeared-pairs" class="section level4">
+<h4>Word-pair : Network diagram of frequently appeared pairs</h4>
+<pre class="r"><code>library(ggraph)
+library(igraph)
+
+set.seed(25)
+a &lt;- grid::arrow(type = &quot;closed&quot;, length = unit(.10, &quot;inches&quot;))
+f =  word_pairs_Washington %&gt;%
+  head(100) %&gt;% 
+  graph_from_data_frame() %&gt;%
+  ggraph(layout = &quot;fr&quot;) +
+  geom_edge_link(aes(edge_alpha = n), show.legend = FALSE, end_cap = circle(.06, &#39;inches&#39;)) + #arrow = a,
+  geom_node_point(color = &quot;pink&quot;, size = 4) +
+  geom_node_text(aes(label = name), repel = TRUE) +
+  theme_void()
+f</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-47-1.png" width="864" style="display: block; margin: auto;" /></p>
+<p>This network again tells how two words appeared frequently in <em>Washington</em> section.</p>
+<hr />
+</div>
+</div>
+<div id="coefficient-of-association-between-two-wordscorrelation" class="section level3">
+<h3>coefficient of association between two words(correlation)</h3>
+<p>Here we’ll focus on the <span class="math inline">\(\phi\)</span> coefficient, a common measure for binary correlation. The focus of the phi coefficient is how much more likely it is that either both word X and Y appear, or neither do, than that one appears without the other in each article</p>
+<p>This <span class="math inline">\(\phi\)</span> coefficient is actually a statistical formula for measuring association between two attributes. Same formula here we are using to measure the level as well as direction of association between two words in each news article of a particular section(s).</p>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:left;">
+d has word Y
+</th>
+<th style="text-align:left;">
+d has no word Y
+</th>
+<th style="text-align:left;">
+Total
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+d has word X
+</td>
+<td style="text-align:left;">
+n11
+</td>
+<td style="text-align:left;">
+n10
+</td>
+<td style="text-align:left;">
+n1.
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+d has no word X
+</td>
+<td style="text-align:left;">
+n01
+</td>
+<td style="text-align:left;">
+n00
+</td>
+<td style="text-align:left;">
+n0.
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Total
+</td>
+<td style="text-align:left;">
+n.1
+</td>
+<td style="text-align:left;">
+n.0
+</td>
+<td style="text-align:left;">
+n
+</td>
+</tr>
+</tbody>
+</table>
+<p><span class="math display">\[
+\phi = \frac{{n_{11}}{n_{00}} - {n_{10}}{n_{01}}} {\sqrt{n_1.n_0.n_.0n_.1}}
+\]</span> <br /></p>
+<p>Pairs with high correlation(green) have high level of association and those with low correlation(red) have less association.</p>
+<pre class="r"><code>word_cor_Business &lt;-tidy1 %&gt;% # Here we are considering *Business* section firstly.
+  filter(new_desk == &quot;Business&quot;) %&gt;%
+  filter(!word %in% stop_words$word) %&gt;% 
+  group_by(word) %&gt;%
+  filter(n() &gt;= 50) %&gt;%
+  pairwise_cor(word, artcle_no, sort = TRUE)
+
+word_cor_National &lt;-tidy1 %&gt;%  #  This is for *National* section
+  filter(new_desk == &quot;National&quot;) %&gt;%
+  filter(!word %in% stop_words$word) %&gt;% 
+  group_by(word) %&gt;%
+  filter(n() &gt;= 50) %&gt;%
+  pairwise_cor(word, artcle_no, sort = TRUE)</code></pre>
+<pre class="r"><code>df1 = word_cor_Business %&gt;% head(50)
+df2 = word_cor_Business %&gt;% tail(50)
+df = bind_rows(df1,df2)
+for(i in 1:100){
+  for(j in 1:100){
+    if(df$item1[i] == df$item2[j] &amp; df$item1[j] == df$item2[i] &amp; df[j,1] != &quot;a&quot;){
+      df[j,] = &quot;a&quot;
+    }
+      
+  }
+}
+
+df$correlation = as.numeric(df$correlation)
+df = df %&gt;% filter(item1 != &quot;a&quot;)
+
+df %&gt;%
+  ggplot(aes(as.numeric(reorder(paste(item1,item2,sep = &quot; - &quot;),correlation)),correlation)) +
+  geom_col(aes(fill = as.factor(sign(correlation))),
+           alpha = c(seq(1,0.3,length.out = 25),seq(0.3,1,length.out = 25)),width = 0.5,show.legend = FALSE) + 
+  labs(x = &quot;&quot;, y = &quot;Correlation&quot;, title = &quot;Business section&quot;, subtitle=&quot;Level of association b/w two words&quot;) +
+  theme_bw() +
+  theme(axis.text.y = element_text(vjust = 0.01,size = 10),
+        plot.title = element_text(vjust = 0.5,hjust = 0.5),
+        plot.subtitle =  element_text(vjust = 0.5,hjust = 0.5),
+        panel.grid.major.y = element_blank(),
+        axis.ticks = element_blank()) +
+  scale_y_continuous(limits = c(-0.5,1),expand = c(0,0)) +
+  scale_fill_manual(values = c(&quot;red&quot;,&quot;springgreen&quot;)) +
+  scale_x_continuous(breaks = 50:1,
+                     labels = c(rep(&quot;&quot;,25),as.character(reorder(paste(df$item1,df$item2,sep = &quot; - &quot;),df$correlation)[26:50])),
+                     sec.axis = sec_axis(~.,
+                                         breaks = 50:1,
+                                         labels = c(as.character(reorder(paste(df$item1,df$item2,sep = &quot; - &quot;),df$correlation)[1:25]),rep(&quot;&quot;,25))
+                                         )) +
+  coord_flip()</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-50-1.png" width="864" /></p>
+<hr />
+<pre class="r"><code>df1 = word_cor_National %&gt;% 
+  filter(!item1 %in% c(&quot;edition&quot;,&quot;print&quot;,&quot;reprints,&quot;,&quot;subscribe&quot;,&quot;today&#39;s&quot;) &amp;
+           !item2 %in% c(&quot;edition&quot;,&quot;print&quot;,&quot;reprints,&quot;,&quot;subscribe&quot;,&quot;today&#39;s&quot;)) %&gt;% head(50)
+
+df2 = word_cor_National %&gt;% 
+  filter(!item1 %in% c(&quot;edition&quot;,&quot;print&quot;,&quot;reprints,&quot;,&quot;subscribe&quot;,&quot;today&#39;s&quot;) &amp;
+           !item2 %in% c(&quot;edition&quot;,&quot;print&quot;,&quot;reprints,&quot;,&quot;subscribe&quot;,&quot;today&#39;s&quot;)) %&gt;% tail(50)
+
+df = bind_rows(df1,df2)
+for(i in 1:100){
+  for(j in 1:100){
+    if(df$item1[i] == df$item2[j] &amp; df$item1[j] == df$item2[i] &amp; df[j,1] != &quot;a&quot;){
+      df[j,] = &quot;a&quot;
+    }
+      
+  }
+}
+
+df$correlation = as.numeric(df$correlation)
+df = df %&gt;% filter(item1 != &quot;a&quot;)
+
+df[1:50,] %&gt;%
+  ggplot(aes(as.numeric(reorder(paste(item1,item2,sep = &quot; - &quot;),correlation)),correlation)) +
+  geom_col(aes(fill = as.factor(sign(correlation))),
+           alpha = c(seq(1,0.3,length.out = 25),seq(0.3,1,length.out = 25)),width = 0.5,show.legend = FALSE) + 
+  labs(x = &quot;&quot;, y = &quot;Correlation&quot;, title = &quot;Section - National&quot;, subtitle=&quot;Level of association b/w two words&quot;) +
+  theme_bw() +
+  theme(axis.text.y = element_text(vjust = 0.01,size = 10),
+        plot.title = element_text(vjust = 0.5,hjust = 0.5),
+        plot.subtitle =  element_text(vjust = 0.5,hjust = 0.5),
+        panel.grid.major.y = element_blank(),
+        axis.ticks = element_blank()) +
+  scale_y_continuous(limits = c(-0.5,1),expand = c(0,0)) +
+  scale_fill_manual(values = c(&quot;red&quot;,&quot;springgreen&quot;)) +
+  scale_x_continuous(breaks = 50:1,
+                     labels = c(rep(&quot;&quot;,25),as.character(reorder(paste(df$item1,df$item2,sep = &quot; - &quot;),df$correlation)[26:50])),
+                     sec.axis = sec_axis(~.,
+                                         breaks = 50:1,
+                                         labels = c(as.character(reorder(paste(df$item1,df$item2,sep = &quot; - &quot;),df$correlation)[1:25]),rep(&quot;&quot;,25))
+                                         )) +
+  coord_flip()</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-51-1.png" width="864" /></p>
+<hr />
+<div id="association-between-pairs-network-digram" class="section level4">
+<h4>Association between pairs: network digram</h4>
+<pre class="r"><code>library(ggraph)
+library(igraph)
+
+set.seed(25)
+
+f = word_cor_National %&gt;%
+  filter(!item1 %in% c(&quot;edition&quot;,&quot;print&quot;,&quot;reprints,&quot;,&quot;subscribe&quot;,&quot;today&#39;s&quot;) &amp;
+           !item2 %in% c(&quot;edition&quot;,&quot;print&quot;,&quot;reprints,&quot;,&quot;subscribe&quot;,&quot;today&#39;s&quot;)) %&gt;% 
+  filter(correlation &gt; .50) %&gt;%
+  graph_from_data_frame() %&gt;%
+  ggraph(layout = &quot;fr&quot;) +
+  geom_edge_link(aes(edge_alpha = correlation), show.legend = FALSE) +
+  geom_node_point(color = &quot;pink&quot;, size = 4) +
+  geom_node_text(aes(label = name), repel = TRUE) +
+  theme_void()
+f</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/(Section: National)-1.png" width="864" style="display: block; margin: auto;" /></p>
+<p>Thus different words are connected to each other by a correlation. We see some words like <em>Washington, Sheriff, gun</em> are having maximum number of connections, meaning there is positive association between these words with most of some other words in news.</p>
+<hr />
+<pre class="r"><code>library(visNetwork)
+df = word_cor_Business %&gt;% filter(correlation &gt;= 0.5)
+df$i1 = as.numeric(factor(df$item1,levels = unique(c(df$item1,df$item2))))
+df$i2 = as.numeric(factor(df$item2,levels = unique(c(df$item1,df$item2))))
+df = df[!duplicated(df$correlation),]
+
+nodes = as.data.frame(table(c(df$item1,df$item2),c(df$i1,df$i2))) %&gt;% filter(Freq != 0)
+colnames(nodes) = c(&#39;label&#39;,&#39;id&#39;,&#39;value&#39;)
+nodes$label = as.character(nodes$label)
+nodes$id = as.integer(as.character(nodes$id))
+nodes$shape=&#39;ellipse&#39;
+nodes$group = &quot;B&quot;
+# nodes$font.size = nodes$value*2
+
+
+edges &lt;- data.frame(from = df$i1, to = df$i2,length = df$correlation,value= df$correlation,title = df$correlation,shadow = FALSE)
+# edges$label = round(df$correlation,2) #arrows = &quot;to&quot;,
+visNetwork(nodes, edges, width = &quot;100%&quot;)  %&gt;%
+  visInteraction(navigationButtons = TRUE)</code></pre>
+<div id="htmlwidget-85eff2a6795a334eaa6e" style="width:100%;height:528px;" class="visNetwork html-widget"></div>
+<script type="application/json" data-for="htmlwidget-85eff2a6795a334eaa6e">{"x":{"nodes":{"label":["videos","youtube","president","trump","nyt","billion","banks","bank","chief","policy","financial","company","companies","percent","million","investors","united","rifles","firearms","week","business","sales","facebook","times","deal","news","media"],"id":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27],"value":[1,1,2,2,6,5,1,6,3,2,3,1,2,7,3,5,2,1,1,1,3,4,1,2,3,1,1],"shape":["ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse","ellipse"],"group":["B","B","B","B","B","B","B","B","B","B","B","B","B","B","B","B","B","B","B","B","B","B","B","B","B","B","B"]},"edges":{"from":[1,3,5,7,9,11,12,14,11,17,18,5,5,15,8,6,14,8,14,22,23,25,5,17,6,21,5,14,6,22,5,11,26,6,14],"to":[2,4,6,8,10,8,13,15,16,4,19,8,16,9,16,16,20,21,16,9,24,15,14,3,14,13,24,25,8,10,25,21,27,22,22],"length":[0.944400281603035,0.881917103688197,0.77005354108682,0.725476250110012,0.705889154385799,0.677645213997067,0.640334777155942,0.639021484263458,0.635673624288425,0.629940788348712,0.618070046200738,0.61665481259351,0.585469378608928,0.585369407004964,0.585239048452013,0.578444773052035,0.572351471472339,0.561746776189629,0.558580008830575,0.547517129961333,0.542137476548395,0.530330085889911,0.528868582226449,0.523809523809524,0.516514916340446,0.513609801795985,0.512989176042577,0.512103948159461,0.510310363079829,0.509644729367952,0.507833375077008,0.506339110014187,0.506129413215831,0.505620582960231,0.502778518295797],"value":[0.944400281603035,0.881917103688197,0.77005354108682,0.725476250110012,0.705889154385799,0.677645213997067,0.640334777155942,0.639021484263458,0.635673624288425,0.629940788348712,0.618070046200738,0.61665481259351,0.585469378608928,0.585369407004964,0.585239048452013,0.578444773052035,0.572351471472339,0.561746776189629,0.558580008830575,0.547517129961333,0.542137476548395,0.530330085889911,0.528868582226449,0.523809523809524,0.516514916340446,0.513609801795985,0.512989176042577,0.512103948159461,0.510310363079829,0.509644729367952,0.507833375077008,0.506339110014187,0.506129413215831,0.505620582960231,0.502778518295797],"title":[0.944400281603035,0.881917103688197,0.77005354108682,0.725476250110012,0.705889154385799,0.677645213997067,0.640334777155942,0.639021484263458,0.635673624288425,0.629940788348712,0.618070046200738,0.61665481259351,0.585469378608928,0.585369407004964,0.585239048452013,0.578444773052035,0.572351471472339,0.561746776189629,0.558580008830575,0.547517129961333,0.542137476548395,0.530330085889911,0.528868582226449,0.523809523809524,0.516514916340446,0.513609801795985,0.512989176042577,0.512103948159461,0.510310363079829,0.509644729367952,0.507833375077008,0.506339110014187,0.506129413215831,0.505620582960231,0.502778518295797],"shadow":[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]},"nodesToDataframe":true,"edgesToDataframe":true,"options":{"width":"100%","height":"100%","nodes":{"shape":"dot"},"manipulation":{"enabled":false},"interaction":{"navigationButtons":true}},"groups":["B"],"width":"100%","height":null,"idselection":{"enabled":false},"byselection":{"enabled":false},"main":null,"submain":null,"footer":null,"background":"rgba(0, 0, 0, 0)","tooltipStay":300,"tooltipStyle":"position: fixed;visibility:hidden;padding: 5px;white-space: nowrap;font-family: verdana;font-size:14px;font-color:#000000;background-color: #f5f4ed;-moz-border-radius: 3px;-webkit-border-radius: 3px;border-radius: 3px;border: 1px solid #808074;box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);"},"evals":[],"jsHooks":[]}</script>
+<pre class="r"><code>  # visOptions(selectedBy = &quot;label&quot;,highlightNearest = list(enabled =TRUE, degree = 2)) %&gt;% 
+  # visGroups(groupname = &quot;B&quot;, shape = &#39;icon&#39;, icon = list(code = &quot;f0c2&quot;)) %&gt;% # , color = &quot;pink&quot;,size = 75
+  # visLegend() %&gt;%
+  # addFontAwesome()
+  # visHierarchicalLayout(direction = &quot;LR&quot;)</code></pre>
+<hr />
+</div>
+</div>
+<div id="topic-modeling" class="section level3">
+<h3>Topic modeling</h3>
+<ul>
+<li><p><strong>A method for finding a group of words (i.e topic) from a collection of documents that best represents the information in the collection</strong>. It can also be thought of as a form of text mining – a way to obtain recurring patterns of words in textual material.</p></li>
+<li><p>Topic modeling is a method for unsupervised classification of documents, similar to clustering on numeric data, which finds natural groups of items based on the similarity between their conents. It provides a simple way to analyze large volumes of unlabeled text.</p></li>
+<li><p>A “topic” consists of a cluster of words that frequently occur together. Using contextual clues, topic models can connect words with similar meanings and distinguish between uses of words with multiple meanings.</p></li>
+<li><p>There are many techniques that are used to obtain topic models.</p>
+<ul>
+<li>Latent Dirichlet Allocation (LDA): a widely used topic modelling technique.</li>
+<li>TextRank process: a graph-based algorithm to extract relevant key phrases.</li>
+</ul></li>
+</ul>
+<p><br /></p>
+<div id="lda-latent-dirichlet-allocation" class="section level4">
+<h4>LDA [Latent Dirichlet allocation]</h4>
+<p>Latent Dirichlet allocation (LDA) is a one of the popular method for fitting a topic model. Here each document is treated as a mixture of topics, and each topic as a mixture of words.</p>
+<p>LDA is a mathematical method for finding the mixture of words that is associated with each topic, while also determining the mixture of topics that describes each document.</p>
+<p>In LDA, we assume that there are k underlying latent topics according to which documents are generated, and that each topic is represented as a multinomial distribution over the <span class="math inline">\(|V|\)</span> words in the vocabulary. A document is generated by sampling a mixture of these topics and then sampling words from that mixture.</p>
+<p>More precisely, a document of N words <span class="math inline">\(W = (w_1,w_2,...w_N)\)</span> is generated by the following process. First, <span class="math inline">\(\theta\)</span> is sampled from a Dirichlet <span class="math inline">\((\alpha_1,\alpha_2,...,\alpha_k)\)</span> distribution. This means that <span class="math inline">\(\theta\)</span> lies in the (k - 1)-dimensional simplex: <span class="math inline">\(\theta_i \ge 0, \sum_i\theta_i=1\)</span>. Then, for each of the N words, a topic $z_n {1,2,…k} $ is sampled from a <span class="math inline">\(Mult(\theta)\)</span> distribution <span class="math inline">\(P(z_n=i/\theta) = \theta_i\)</span> . Finally, each word <span class="math inline">\(w_n\)</span> is sampled, conditioned on the <span class="math inline">\(z_n\)</span>th topic, from the multinomial distribution <span class="math inline">\(P(w/z_n)\)</span>. Intuitively, <span class="math inline">\(\theta_i\)</span> can be thought of as the degree to which topic <span class="math inline">\(i\)</span> is referred to in the document. Written out in full, the probability of a document is therefore the following mixture:</p>
+<p><span class="math inline">\(p(w) = \int_\theta \left( \prod \limits_{n=1}^{N} \sum \limits_{z_n=1}^{k} P(w_n|z_n;\beta) P(z_n|\theta)\right)P(\theta;\alpha) d\theta\)</span></p>
+<p>where <span class="math inline">\(P(\theta;\alpha)\)</span> is Dirichlet, <span class="math inline">\(P(z_n|\theta)\)</span> is a multinomial parameterized by <span class="math inline">\(\theta\)</span>, and <span class="math inline">\(P(w_n|z_n;\beta)\)</span> is a multinomial over the words. This model is parameterized by the kdimensional Dirichlet parameters <span class="math inline">\(\alpha = (\alpha_1,\alpha_2,...,\alpha_k)\)</span> and a <span class="math inline">\(k\times|{V}|\)</span> matrix,<span class="math inline">\(\beta\)</span>, which are parameters controlling the k multinomial distributions over words.</p>
+<p>In our case each news article(500) is a single document and topics are particular sections like <strong>National</strong>,<strong>Sports</strong>,<strong>Politics</strong>, etc</p>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-52-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>The topic modeling is done on the news articles which are dominant interms of frequency. Thus <em>Opinion, Business, Washington, NYTNow</em> these are most sections we are refering in topic modeling. What all here done is taking all words from these four sections and then modeling them in four topics. At last we depict the effect of our modeling in pictorial way, where it is possible to know how well our modelling classified each word in different sections.</p>
+</div>
+<div id="data-preparation" class="section level4">
+<h4>Data Preparation</h4>
+<p>First of all, we are using <code>topicmodels</code> package for topic modeling, which needa a Document Term Matrix, and it is directly obtained by applying <code>cast_dtm()</code> function from <code>tidytext</code> package on the tidy data.</p>
+<pre class="r"><code>word_count &lt;- tidy1 %&gt;% 
+  filter(new_desk %in% c(&quot;Opinion&quot;,&quot;Business&quot;,&quot;Washington&quot;,&quot;NYTNow&quot;),
+         !word %in% c(&quot;___&quot;,&quot;____&quot;,&quot;_____&quot;)) %&gt;% 
+  # ,&quot;gun&quot;,&quot;school&quot;,&quot;student&quot;,&quot;people&quot;,&quot;shooting&quot;,&quot;parkland&quot;,&quot;florida&quot;,&quot;control&quot;,&quot;17&quot;,&quot;day&quot;,&quot;schools&quot;
+  # &quot;Insider&quot;,&quot;U.S./Politics&quot;,&quot;Sports&quot;,&quot;Podcasts&quot; #c(&quot;Washington&quot;,&quot;National&quot;,&quot;Opinion&quot;,&quot;NYTNow&quot;,&quot;Business&quot;,&quot;Learning&quot;)
+  anti_join(stop_words) %&gt;%
+  mutate(document = paste(new_desk,artcle_no,sep = &quot;_&quot;)) %&gt;% 
+  count(document,word)
+
+word_count %&gt;% arrange(-n) %&gt;% head(10) %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+document
+</th>
+<th style="text-align:left;">
+word
+</th>
+<th style="text-align:right;">
+n
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Business_478
+</td>
+<td style="text-align:left;">
+news
+</td>
+<td style="text-align:right;">
+49
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Opinion_88
+</td>
+<td style="text-align:left;">
+gun
+</td>
+<td style="text-align:right;">
+43
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Opinion_101
+</td>
+<td style="text-align:left;">
+gun
+</td>
+<td style="text-align:right;">
+42
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Washington_40
+</td>
+<td style="text-align:left;">
+gun
+</td>
+<td style="text-align:right;">
+38
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Washington_404
+</td>
+<td style="text-align:left;">
+school
+</td>
+<td style="text-align:right;">
+34
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Business_282
+</td>
+<td style="text-align:left;">
+school
+</td>
+<td style="text-align:right;">
+33
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Washington_212
+</td>
+<td style="text-align:left;">
+student
+</td>
+<td style="text-align:right;">
+33
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Business_484
+</td>
+<td style="text-align:left;">
+banks
+</td>
+<td style="text-align:right;">
+32
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Washington_185
+</td>
+<td style="text-align:left;">
+gun
+</td>
+<td style="text-align:right;">
+32
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Washington_205
+</td>
+<td style="text-align:left;">
+ar
+</td>
+<td style="text-align:right;">
+32
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>sections_dtm &lt;- word_count %&gt;%
+  cast_dtm(document, word, n)
+
+sections_dtm</code></pre>
+<pre><code>&lt;&lt;DocumentTermMatrix (documents: 224, terms: 16738)&gt;&gt;
+Non-/sparse entries: 84181/3665131
+Sparsity           : 98%
+Maximal term length: 22
+Weighting          : term frequency (tf)</code></pre>
+</div>
+<div id="lda-on-sections" class="section level4">
+<h4>LDA on sections</h4>
+<p>As we considered 4 sections only, so the number of topics is also 4.</p>
+<pre class="r"><code>sections_lda &lt;- LDA(sections_dtm, k = 4, control = list(seed = 123))
+sections_lda</code></pre>
+<pre><code>A LDA_VEM topic model with 4 topics.</code></pre>
+<div id="beta-values" class="section level5">
+<h5>Beta values</h5>
+<ul>
+<li><strong>Beta: </strong> Which is a measure of probability of each word being classified in each topic. It is also called <em>per-topic-per-word probabily</em></li>
+</ul>
+<p>Document can be actually represented as the <code>Section_serial.number</code> for convenience.</p>
+<pre class="r"><code>sections_topics &lt;- tidy(sections_lda, matrix = &quot;beta&quot;)
+sections_topics %&gt;% tail(10) %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr>
+<th style="text-align:right;">
+topic
+</th>
+<th style="text-align:left;">
+term
+</th>
+<th style="text-align:right;">
+beta
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:left;">
+towels
+</td>
+<td style="text-align:right;">
+0.00e+00
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:left;">
+towels
+</td>
+<td style="text-align:right;">
+3.65e-05
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+trucker
+</td>
+<td style="text-align:right;">
+0.00e+00
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:left;">
+trucker
+</td>
+<td style="text-align:right;">
+0.00e+00
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:left;">
+trucker
+</td>
+<td style="text-align:right;">
+0.00e+00
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:left;">
+trucker
+</td>
+<td style="text-align:right;">
+3.66e-05
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:left;">
+uncross
+</td>
+<td style="text-align:right;">
+0.00e+00
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:left;">
+uncross
+</td>
+<td style="text-align:right;">
+0.00e+00
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:left;">
+uncross
+</td>
+<td style="text-align:right;">
+0.00e+00
+</td>
+</tr>
+<tr>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:left;">
+uncross
+</td>
+<td style="text-align:right;">
+3.66e-05
+</td>
+</tr>
+</tbody>
+</table>
+<p>The top 10 words in each topic interms of beta values are given in below graph.</p>
+<pre class="r"><code>top_terms &lt;- sections_topics %&gt;%
+  group_by(topic) %&gt;%
+  top_n(10, beta) %&gt;%
+  ungroup() %&gt;%
+  arrange(topic, -beta)
+
+# top_terms
+
+top_terms %&gt;%
+  mutate(term = reorder(term, beta)) %&gt;%
+  ggplot(aes(term, beta, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = &quot;free&quot;) +
+  ggtitle(label = &quot;Topicwise beta values of top words&quot;) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  coord_flip()</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-56-1.png" width="672" /></p>
+</div>
+</div>
+<div id="per-document-classification" class="section level4">
+<h4>Per-document classification</h4>
+<p>The document is each news article. As already mentioned, document name is combination of section and article serial number. Here the Document-topic probability is calculated (called <em>gamma</em>), which tells by what probability particular topic is related to particular document.</p>
+<pre class="r"><code>sections_gamma &lt;- tidy(sections_lda, matrix = &quot;gamma&quot;)
+sections_gamma %&gt;% head(10)</code></pre>
+<pre><code># A tibble: 10 x 3
+   document     topic     gamma
+   &lt;chr&gt;        &lt;int&gt;     &lt;dbl&gt;
+ 1 Business_119     1 0.336    
+ 2 Business_121     1 1.00     
+ 3 Business_134     1 0.825    
+ 4 Business_147     1 0.0000979
+ 5 Business_159     1 0.740    
+ 6 Business_164     1 0.534    
+ 7 Business_165     1 0.955    
+ 8 Business_166     1 0.0000699
+ 9 Business_168     1 0.764    
+10 Business_174     1 0.979    </code></pre>
+<p>Each of these values is an estimated proportion of words from that particular document that are generated from that given topic.</p>
+<pre class="r"><code>sections_gamma &lt;- sections_gamma %&gt;%
+  separate(document, c(&quot;section&quot;, &quot;article_no&quot;), sep = &quot;_&quot;, convert = TRUE)
+
+# sections_gamma</code></pre>
+<pre class="r"><code>sections_gamma %&gt;%
+  mutate(article_no = reorder(article_no, gamma * topic)) %&gt;%
+  ggplot(aes(factor(topic), gamma)) +
+  geom_boxplot() +
+  ggtitle(label = &quot;Resemble in topic and section&quot;) +
+  theme(panel.grid = element_blank(),plot.title = element_text(hjust = 0.5)) +
+  facet_wrap(~ section)</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-59-1.png" width="672" /></p>
+<p>As we see, the topic 1 corresponds to <em>Business</em>, topic 2 corresponds to <em>Washington</em>, topic 3 and topic 4 are corresponding to <em>NYTNow</em> and <em>Opinion</em> sections respectively. But topic 2 which is analogous to <em>Washington</em> seems to have some contribution to <em>Business</em> and <em>Opininion</em> sections as well. Means there are some words in <em>Washington</em> (topic 2), which are also in other two mentioned sections (topics). Similarly the pattern of overlap of words is seen in other topics also. This will be clearly seen in below graph.</p>
+<pre class="r"><code>section_classifications &lt;- sections_gamma %&gt;%
+  group_by(section,article_no) %&gt;%
+  top_n(1, gamma) %&gt;%
+  ungroup()
+
+section_classifications %&gt;% group_by(topic) %&gt;% top_n(3,gamma)</code></pre>
+<pre><code># A tibble: 12 x 4
+# Groups:   topic [4]
+   section    article_no topic gamma
+   &lt;chr&gt;           &lt;int&gt; &lt;int&gt; &lt;dbl&gt;
+ 1 Business          471     1  1.00
+ 2 Business          495     1  1.00
+ 3 Business          497     1  1.00
+ 4 Washington        185     2  1.00
+ 5 Washington        205     2  1.00
+ 6 Washington         40     2  1.00
+ 7 Business          391     3  1.00
+ 8 Business          478     3  1.00
+ 9 Business          491     3  1.00
+10 Opinion           428     4  1.00
+11 Washington        397     4  1.00
+12 Washington         51     4  1.00</code></pre>
+<pre class="r"><code>news_topics &lt;- section_classifications %&gt;%
+  count(section, topic) %&gt;%
+  group_by(section) %&gt;%
+  top_n(1, n) %&gt;%
+  ungroup() %&gt;%
+  transmute(consensus = section, topic)</code></pre>
+</div>
+<div id="assignments" class="section level4">
+<h4>Assignments</h4>
+<p>Now we are assigning each topic to each sections and plotting the graph of classification, which will reveal how well the modeling is.</p>
+<pre class="r"><code>assignments &lt;- augment(sections_lda, data = sections_dtm)
+# assignments
+assignments &lt;- assignments %&gt;%
+  separate(document, c(&quot;section&quot;, &quot;article_no&quot;), sep = &quot;_&quot;, convert = TRUE) %&gt;%
+  inner_join(news_topics, by = c(&quot;.topic&quot; = &quot;topic&quot;))
+
+# assignments</code></pre>
+<pre class="r"><code>library(scales)
+assignments %&gt;%
+  count(section, consensus, wt = count) %&gt;%
+  group_by(section) %&gt;%
+  mutate(percent = n / sum(n)) %&gt;%
+  ggplot(aes(consensus, section, fill = percent)) +
+  geom_tile() +
+  scale_fill_gradient2(high = &quot;red&quot;, label = percent_format()) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        panel.grid = element_blank()) +
+  labs(x = &quot;Section words were assigned to&quot;,
+       y = &quot;Section words came from&quot;,
+       fill = &quot;% of assignments&quot;)</code></pre>
+<p><img src="NYT_R_workout_files/figure-html/unnamed-chunk-63-1.png" width="672" /></p>
+<p>The graph tells us that most of the words which came from the section <em>Opinion</em> are classified into <em>NYTNow</em> and <em>Washington</em>. Anyhow there is sharing of some common words (must be related to parkland shooting) in almost all sections to some extent at least. But still <em>Business, Washington and NYTNow</em> sections seem to have better classification.</p>
+<hr />
+<p>THANK YOU</p>
+<hr/>
+</div>
+</div>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

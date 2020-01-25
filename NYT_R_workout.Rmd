@@ -1,0 +1,1819 @@
+---
+title: 'The New York Times : News Scrapping'
+author: "Kumar Suresh Halake"
+date: "25 January 2020"
+output:
+  html_document:
+    code_folding: show
+    self_contained: no
+    toc: yes
+    toc_depth: 3
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+  word_document:
+    toc: yes
+    toc_depth: '3'
+---
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 14px;
+  }
+td {  /* Table  */
+  font-size: 13px;
+}
+h1.title {
+  font-size: 38px;
+  color: purple;
+  font-family:Script,Blackletter;
+}
+h1 { /* Header 1 */
+  font-size: 28px;
+  color: DarkBlue;
+}
+h2 { /* Header 2 */
+    font-size: 25px;
+  color: DarkBlue;
+}
+h3 { /* Header 3 */
+  font-size: 22px;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkBlue;
+}
+code.r{ /* Code block */
+    font-size: 12px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 14px;
+}
+</style>
+
+------
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache = TRUE,warning = FALSE,message = FALSE,error = FALSE,comment = "")
+```
+
+```{r,cache=TRUE,echo=FALSE,include=FALSE}
+NYTIMES_AS_KEY = "<NYTIMES_AS_KEY>"
+NYTIMES_AR_KEY ="<NYTIMES_AR_KEY>"
+NYTIMES_GEO_KEY = "<NYTIMES_GEO_KEY>"
+NYTIMES_MP_KEY = "<NYTIMES_MP_KEY>"
+NYTIMES_COM_KEY = "<NYTIMES_COM_KEY>"
+PROPUBLICA_API_KEY = "<PROPUBLICA_API_KEY>"
+```
+
+### Introduction
+
+<h1 style="font-family: Sketch Gothic School; text-align: center">The New York Times</h1>
+
+
+* **The New York Times** is a global media organization dedicated to helping people understand the world through unrivaled, on-the-ground, expert and deeply reported independent journalism
+
+* Founded as the *New-York Daily Times* on September 18, 1851, by journalist and politician Henry Jarvis Raymond and former banker George Jones
+
+* It is owned by **The New York Times Company**
+
+* It has got worldwide influence and readers. The paper has won 125 **Pulitzer Prizes**, more than any other newspaper.
+
+* The New York Times is the second-most-circulated newspaper in the US (approximately 1,865,318 average circulation)
+
+* **Slogan: ** *"All the News That's Fit to Print"*
+
+* **Reputation : ** The Times has developed a national and international "reputation for thoroughness" over time.
+    - Among journalists, the paper is held in high regard; a 1999 survey of newspaper editors conducted by the Columbia Journalism Review found that the Times was the "best" American paper, ahead of The Washington Post, The Wall Street Journal, and Los Angeles Times.
+    - The Times also was ranked #1 in a 2011 "quality" ranking of U.S. newspapers by Daniel de Vise of The Washington Post; the objective ranking took into account the number of recent Pulitzer Prizes won, circulation, and perceived Web site quality.
+    - A 2012 report in WNYC called the Times "the most respected newspaper in the world."
+
+* [URL: https://www.nytimes.com/](https://www.nytimes.com/)
+
+<br />
+
+```{r,warnimg=FALSE,message=FALSE}
+list.of.packages <- c('ggplot2', 'jsonlite', 'xml2', 'rvest', 'stringi', 'stringr', 'rebus', 'curl', 'tm', 'tidyr', 'tidytext', 'tidyverse', 'widyr', 'googleVis', 'knitr', 'kableExtra', 'topicmodels', 'gridExtra','crul','data.table','devtools','bindrcpp','wordcloud','igraph','magick','plotrix','visNetwork','png','textdata')
+
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)>0) {install.packages(new.packages)} #,dependencies = TRUE
+
+if("rtimes" %in% rownames(installed.packages()) == FALSE) {install.packages('./rtimes', repos = NULL, type="source")} 
+#rtimes is removed from CRAN, archive --> https://cran.r-project.org/src/contrib/Archive/rtimes/
+
+if("nytimes" %in% rownames(installed.packages()) == FALSE) {devtools::install_github("mkearney/nytimes")}
+
+unlist(lapply(append(list.of.packages,c("nytimes","rtimes")), require, character.only = TRUE))
+```
+
+```{r,warning=FALSE,message=FALSE,include=FALSE,eval=FALSE,echo=FALSE}
+library(rtimes)
+library(ggplot2)
+library(nytimes)
+library(jsonlite)
+library(xml2)
+library(rvest)
+library(stringi)
+library(stringr)
+library(rebus)
+library(curl)
+library(tm)
+library(tidyr)
+library(tidytext)
+library(tidyverse)
+library(widyr)
+library(googleVis)
+library(knitr)
+library(kableExtra)
+library(topicmodels)
+library(gridExtra)
+```
+
+```{r echo=FALSE}
+theme_set(theme_bw())
+```
+
+------
+
+### Article search
+
+First of all we are searching all the articles from *12 February 2018* to *22 April 2018* having the keyword **parkland** by using the function `as_search()` with required arguments in it. Then we get the metadata like *url, headline, snippet, keywords, pub_date, word_count*, etc of all the articles containing the specified keyword. Then after to access the full content of each article, we need to scrap by using the article url(which is in metadata) with the help of packages like `curl`,`xml2` and other.
+
+Our main focus is on text articles only, so the scrapping of content is done only for those articles, which are in textual format and not other multimedia formats like image, video, etc.
+
+**NOTE: ** : If one interested in other keywords and another date range, just make corresponding changes in following snippet. The API's could be found [here](https://developer.nytimes.com/apis)
+
+```{r,cache=TRUE,warning=FALSE,message=FALSE,eval=FALSE}
+a <- as_search(q="Parkland", # search query term
+               key = NYTIMES_AS_KEY, # the secret key
+               begin_date = '20180212', # Start date
+               end_date = '20180422', # End date
+               all_results = TRUE,
+               fl = c('web_url','snippet','lead_paragraph','abstract','blog','source','headline','keywords','pub_date','document_type','news_desk','byline','type_of_material','word_count') # field results to return
+               )
+# str(a)
+```
+
+```{r echo=FALSE,include=FALSE}
+# saveRDS(a,'a.rds')
+a <- read_rds('a.rds')
+```
+
+```{r echo=FALSE}
+paste("The size of metadata is :",object.size(a)*10^(-6),"MB")
+```
+
+<br />
+
+The metadata is containing following variables
+```{r}
+names(a$data)
+```
+
+<br />
+
+The dimension of metadata is
+```{r}
+dim(a$data)
+```
+
+<br />
+
+The view of metadata is as below
+```{r}
+a$data %>% head(2) %>% kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left") %>%
+  scroll_box(width = "900px", height = "600px")
+```
+
+------
+
+### Scrapping each text article and combining
+
+Here we are considering roughly 500 text news articles, which contain the word *parkland*. These articles are appended serially one after one in a string vector `p`.
+
+```{r,eval=FALSE,echo=TRUE}
+p = character()
+
+for(url in a$data$web_url[a$data$document_type=="article"][1:500]){
+  
+  page = read_html(curl(url, handle = curl::new_handle("useragent" = "Mozilla/5.0")))
+  
+  full_text = page %>% 
+    html_nodes('p') %>%
+    html_text()
+  
+  full_text = str_replace_all(string = full_text,pattern = "Advertisement",replacement = "")
+
+  full_text = str_replace_all(string = full_text,pattern = "Sign up to receive an email from The New York Times as soon as important news breaks around the world.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "Please verify you're not a robot by clicking the box.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "Invalid email address. Please re-enter.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "You must select a newsletter to subscribe to.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "View all New York Times newsletters.",replacement = "")
+
+  full_text = str_replace_all(string = full_text,pattern = "We’re interested in your feedback on this page. Tell us what you think.",replacement = "")
+
+  full_text = str_replace_all(string = full_text,pattern = "Go to Home Page »",replacement = "")
+  
+  # full_text = paste(str_replace_all(string = full_text,pattern = DIGIT,replacement = ""))
+  
+  p = append(p,paste(full_text,collapse = " "))
+  
+}
+
+# It may take few minutes to perform above scrapping operation. Some minor cleaning process is included in the for loop, where the fixed advertisement/notification is eliminated
+```
+
+```{r,eval=FALSE,echo=FALSE,include=FALSE}
+p1 = character()
+
+for(url in a$data$web_url[a$data$document_type=="article"][1:100]){
+  
+  page = read_html(curl(url, handle = curl::new_handle("useragent" = "Mozilla/5.0")))
+  
+  full_text = page %>% 
+    html_nodes('p') %>%
+    html_text()
+  
+  full_text = str_replace_all(string = full_text,pattern = "Advertisement",replacement = "")
+
+  full_text = str_replace_all(string = full_text,pattern = "Sign up to receive an email from The New York Times as soon as important news breaks around the world.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "Please verify you're not a robot by clicking the box.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "Invalid email address. Please re-enter.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "You must select a newsletter to subscribe to.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "View all New York Times newsletters.",replacement = "")
+
+  full_text = str_replace_all(string = full_text,pattern = "We’re interested in your feedback on this page. Tell us what you think.",replacement = "")
+
+  full_text = str_replace_all(string = full_text,pattern = "Go to Home Page »",replacement = "")
+  
+  # full_text = paste(str_replace_all(string = full_text,pattern = DIGIT,replacement = ""))
+  
+  p1 = append(p1,paste(full_text,collapse = " "))
+  
+  }
+
+#-----------------------------------------------------------------------------
+
+p2 = character()
+
+for(url in a$data$web_url[a$data$document_type=="article"][101:200]){
+  
+  page = read_html(curl(url, handle = curl::new_handle("useragent" = "Mozilla/5.0")))
+  page1 = read_html(curl(a$data$web_url[1], handle = curl::new_handle("useragent" = "Mozilla/5.0")))
+  full_text = page %>% 
+    html_nodes('p') %>%
+    html_text()
+  
+  full_text = str_replace_all(string = full_text,pattern = "Advertisement",replacement = "")
+
+  full_text = str_replace_all(string = full_text,pattern = "Sign up to receive an email from The New York Times as soon as important news breaks around the world.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "Please verify you're not a robot by clicking the box.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "Invalid email address. Please re-enter.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "You must select a newsletter to subscribe to.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "View all New York Times newsletters.",replacement = "")
+
+  full_text = str_replace_all(string = full_text,pattern = "We’re interested in your feedback on this page. Tell us what you think.",replacement = "")
+
+  full_text = str_replace_all(string = full_text,pattern = "Go to Home Page »",replacement = "")
+  
+  # full_text = paste(str_replace_all(string = full_text,pattern = DIGIT,replacement = ""))
+  
+  p2 = append(p2,paste(full_text,collapse = " "))
+  
+  Sys.sleep(sample(c(1,2), 1) * 0.02)
+  
+}
+
+#-----------------------------------------------------------------------------
+
+p3 = character()
+
+for(url in a$data$web_url[a$data$document_type=="article"][201:300]){  #257 not available
+  
+  page = read_html(curl(url, handle = curl::new_handle("useragent" = "Mozilla/5.0")))
+  
+  full_text = page %>% 
+    html_nodes('p') %>%
+    html_text()
+  
+  full_text = str_replace_all(string = full_text,pattern = "Advertisement",replacement = "")
+
+  full_text = str_replace_all(string = full_text,pattern = "Sign up to receive an email from The New York Times as soon as important news breaks around the world.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "Please verify you're not a robot by clicking the box.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "Invalid email address. Please re-enter.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "You must select a newsletter to subscribe to.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "View all New York Times newsletters.",replacement = "")
+
+  full_text = str_replace_all(string = full_text,pattern = "We’re interested in your feedback on this page. Tell us what you think.",replacement = "")
+
+  full_text = str_replace_all(string = full_text,pattern = "Go to Home Page »",replacement = "")
+  
+  # full_text = paste(str_replace_all(string = full_text,pattern = DIGIT,replacement = ""))
+  
+  p3 = append(p3,paste(full_text,collapse = " "))
+  
+  # Sys.sleep(sample(c(1,2,3), 1) * 0.02)
+  
+}
+
+#-----------------------------------------------------------------------------
+
+p4 = character()
+
+for(url in a$data$web_url[a$data$document_type=="article"][301:400]){
+  
+  page = read_html(curl(url, handle = curl::new_handle("useragent" = "Mozilla/5.0")))
+  
+  full_text = page %>% 
+    html_nodes('p') %>%
+    html_text()
+  
+  full_text = str_replace_all(string = full_text,pattern = "Advertisement",replacement = "")
+
+  full_text = str_replace_all(string = full_text,pattern = "Sign up to receive an email from The New York Times as soon as important news breaks around the world.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "Please verify you're not a robot by clicking the box.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "Invalid email address. Please re-enter.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "You must select a newsletter to subscribe to.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "View all New York Times newsletters.",replacement = "")
+
+  full_text = str_replace_all(string = full_text,pattern = "We’re interested in your feedback on this page. Tell us what you think.",replacement = "")
+
+  full_text = str_replace_all(string = full_text,pattern = "Go to Home Page »",replacement = "")
+  
+  # full_text = paste(str_replace_all(string = full_text,pattern = DIGIT,replacement = ""))
+  
+  p4 = append(p4,paste(full_text,collapse = " "))
+  
+}
+
+#-----------------------------------------------------------------------------
+
+p5 = character()
+
+for(url in a$data$web_url[a$data$document_type=="article"][401:500]){
+  
+  page = read_html(curl(url, handle = curl::new_handle("useragent" = "Mozilla/5.0")))
+  
+  full_text = page %>% 
+    html_nodes('p') %>%
+    html_text()
+  
+  full_text = str_replace_all(string = full_text,pattern = "Advertisement",replacement = "")
+
+  full_text = str_replace_all(string = full_text,pattern = "Sign up to receive an email from The New York Times as soon as important news breaks around the world.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "Please verify you're not a robot by clicking the box.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "Invalid email address. Please re-enter.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "You must select a newsletter to subscribe to.",replacement = "")
+  
+  full_text = str_replace_all(string = full_text,pattern = "View all New York Times newsletters.",replacement = "")
+
+  full_text = str_replace_all(string = full_text,pattern = "We’re interested in your feedback on this page. Tell us what you think.",replacement = "")
+
+  full_text = str_replace_all(string = full_text,pattern = "Go to Home Page »",replacement = "")
+  
+  # full_text = paste(str_replace_all(string = full_text,pattern = DIGIT,replacement = ""))
+  
+  p5 = append(p5,paste(full_text,collapse = " "))
+  
+}
+
+p = c(p1,p2,p3,p4,p5)
+
+length(p) # 500
+```
+
+------
+
+### Tidytext format
+
+*Unstructured data analysis* involves some transformations, so that it would become easy to analyse/explore and applying various algorithms. The *tidytext* format comes handy in such cases.
+
+Tidy text is nothing but each row representsn the unit fragmant of text(word/sentence/paragraph/article/section) and each column is its attribute.
+This form is convenient for analysis with the dplyr, tidytext and ggplot2 packages.
+
+Here we are converting the extracted data to tidy format, so that it will become easy for text analysis with the help of some suiatble packages like' `tidyr`,`tidytext`.
+
+We have a metadata of required articles in the object `a` and the actual news content is stored in vector `p`. So retaining the attributes of each article along with its full content is done as below.
+
+```{r,eval=FALSE}
+# The text data is in artciles document type only and not in other multimedia formats, so considering article format only
+nd <- a$data$new_desk[a$data$document_type=="article"][1:500]
+pd <- as.Date(substr(a$data$pub_date[a$data$document_type=="article"][1:500],0,10))
+sc <- a$data$score[a$data$document_type=="article"][1:500]
+
+mydata <- data_frame(new_desk = nd,artcle_no = 1:500,article_body = p,pub_date = pd,score = sc)
+
+# There are some more related sections in news paper, so here we are combining them for easy analysis
+
+# U.S, Politics and U.S-Politics are all considered same
+mydata$new_desk <- ifelse(mydata$new_desk == "U.S." | 
+                            mydata$new_desk == "Politics" | 
+                            mydata$new_desk == "U.S. / Politics", "U.S./Politics",mydata$new_desk)
+
+# learning Network and Learning are also considered same
+mydata$new_desk <- ifelse(mydata$new_desk == "The Learning Network" | 
+                            mydata$new_desk == "Learning", "Learning",mydata$new_desk)
+
+# Letters,OpEd and Editorial are treated as Opinion
+mydata$new_desk <- ifelse(mydata$new_desk == "Letters" |
+                            mydata$new_desk == "OpEd" |
+                            mydata$new_desk == "Editorial", "Opinion",mydata$new_desk)
+
+# New column day is created
+mydata$day = weekdays(mydata$pub_date)
+```
+
+```{r,echo=FALSE}
+# write_csv(mydata,path = "mydata.csv") # The data once prepared can be saved and can be loaded when necessary, because every time scrapping all 500 sites would be cumbersome as it is time consuming 
+mydata <- read_csv('mydata.csv')
+```
+
+```{r,comment=""}
+dplyr::glimpse(mydata)
+```
+
+Now our data is ready, each row is article and each column is its attribute. Next we are tokenizing it in unigram and bigram then performing some graphical explorations and analysis
+
+------
+
+
+### Single word tokenization
+
+Creating a tidy data frame with single word tokens, retaining all of its attributes alongside is as done below.
+
+```{r}
+tidy1 <- mydata %>% 
+  unnest_tokens(word,article_body)
+tidy1$word = ifelse(tidy1$word == "gun" | tidy1$word == "guns","gun",tidy1$word) # gun and guns have same meaning
+tidy1$word = ifelse(tidy1$word == "student" | tidy1$word == "students","student",tidy1$word)
+
+tidy1 %>% head(10) %>% kable() %>% kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+```
+
+
+* *new_desk: * section of article containing this word(unigram)
+
+* *article_no: * serial number of article from 1 to 500
+
+* *pub_date: * date published the article containing this word
+
+* *score: * the score of article in its metadata
+
+* *day: * day of publication
+
+* *word: * the unigram
+
+<br />
+
+#### Frequent words in all articles
+
+Let us see what are different words appeared most frequently in all 500 articles after removing all english stopwords and some custom stopwords like *new,york,times,subscribe,headline,article,edition*.
+
+```{r,warning=FALSE}
+my_stop_words <- bind_rows(stop_words,
+                           data.frame(word = c('new','york','times',"subscribe","headline","article","edition","it's"),
+                                      lexicon = rep('custom',8)))
+tidy1 %>% 
+  anti_join(my_stop_words,by = c("word","word")) %>% 
+  count(word,sort = TRUE) %>% 
+  mutate(word = reorder(word,n)) %>% 
+  top_n(20,n) %>% 
+  ggplot(aes(word,n)) +
+  geom_bar(stat = "identity") +
+  coord_flip() + theme_bw()
+```
+
+As we scrapped data pertaining to **Parkland shooting**, the frequent words whch appeared are also related to it.
+
+
+------
+
+<br />
+
+#### How word frequency changed day by day?
+
+The appearance pattern of any word which may be place/person/event in news articles is related to some eventual happening about that particular word. Here considering some words like *"gun","shooting","parkland","students","trump","korea"* then plottong the frequency versus the date thay appeared.
+
+```{r fig.align='center',fig.width=9,fig.height=5.5}
+tidy1 %>%
+  filter(word %in% c("gun","shooting","parkland","america","trump","korea")) %>%
+  group_by(pub_date,word) %>% tally() %>% 
+  ggplot(aes(pub_date, n)) +
+  geom_point() +
+  geom_smooth() +
+  facet_wrap(~ word, scales = "free_y",ncol = 3) +
+  # scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Date published",y = "frequency of word")
+```
+
+As we see here, the words like *gun*,*parkland*,*shooting*,*students* appeared more frequently on the day of 14 February because the **Parkland school shooting** happened on this day, and then the frequency decreased gradually.
+
+We can see different frequency pattern for the word *korea*, which is irrelevent to this shooting.
+
+
+------
+
+<br />
+
+#### Sections and frequent words
+
+There are many news sections in New York Times like *World*,*U.S.*,*Politics*,*National* and so forth. Below is comparison of which word appeared frequently in which section(s) and also what are different common words in pair of sections.
+
+```{r fig.height=6,fig.width=9}
+frequency <- tidy1 %>% 
+  anti_join(my_stop_words,by = c("word","word")) %>%
+  mutate(word = str_extract(word, "[a-z']+")) %>%
+  count(new_desk, word) %>% 
+  group_by(new_desk) %>%
+  mutate(proportion = n / sum(n)) %>% 
+  select(-n) %>% 
+  spread(new_desk, proportion) %>% 
+  gather(new_desk, proportion, c("Washington","National","Opinion","NYTNow"))
+
+library(scales)
+
+ggplot(frequency, aes(x = proportion, y = Business, color = abs(Business - proportion))) +
+  geom_abline(color = "gray40", lty = 2) +
+  geom_jitter(alpha = 0.1, size = 2.5, width = 0.3, height = 0.3) +
+  geom_text(aes(label = word), check_overlap = TRUE, vjust = 1.5) +
+  scale_x_log10(labels = percent_format()) +
+  scale_y_log10(labels = percent_format()) +
+  scale_color_gradient(limits = c(0, 0.001), low = "darkslategray4", high = "gray75") +
+  facet_wrap(~new_desk, ncol = 2) +
+  theme_gray() +
+  theme(legend.position="none",
+        panel.grid = element_blank(),
+        plot.background = element_rect(fill = "gray90")) 
+```
+
+
+* Y-axis is the proportion of words in Business section and X-axix is proportion of words in *National*, *NYTNow*, *Washington* and *Opinion* respectively clockwise from upper-left facet.
+
+* Words with clear view appeared frequently
+
+* Word near to diagonal line appeared almost equally in both news sections (e.g the word *news* appeared equally in *Business* as well as *washington* sections)
+
+* Word appearing off-diagonal or near to one of axes is frequent word in that section only. (e.g *israel* occured more in *National* but rarely in other news sections)
+
+* The word **gun** is appeared in all *Business*,*National*,*Opinion* and *Washington* more or less same times
+
+* Most of the words in *Business* and *Natioanl* are same (may be with more or less frequency), as the area is almost fully occupied. In contrast the gap at lower frequency in *Business* versus *NYTNow* indicates, there are many different word sets in these two sections.
+
+
+------
+
+<br />
+
+### Sentiment Analysis
+
+```{r echo=FALSE,fig.align='center',fig.height=4.5,fig.width=4.5,strip.white=TRUE}
+img = magick::image_read(png::readPNG('./image/sentiment.png'))
+plot(img)
+# grid::grid.raster(img,width = 0.4,height = 0.4,interpolate = FALSE,vjust = -0.1)  #,,hjust = 0.5
+```
+
+**Sentiment Analysis (sometimes known as opinion mining or emotion AI) refers to the use of natural language processing, text analysis, computational linguistics, and biometrics to systematically identify, extract, quantify and study affective states and subjective information.**
+
+What sentiment we expect from a news which is totally related to terrific shooting? Letus see what is there in data and also compare sentiment for different sections as well.
+
+The [**bing**](https://www.cs.uic.edu/~liub/FBS/sentiment-analysis.html) lexicon categorizes words in a binary fashion that is positive and negative categories. Means it has collection of English words and also type of their sentiment (positive/negative). `tidytext` package provides a function called `get_sentiments`, which is used to get these sentiments.
+
+Note that there are other lexicons also available like -
+
+* **AFINN** is an affective lexicon by Finn Årup Nielsen. It is a list of English words rated for valence with an integer between minus five (negative) and plus five (positive). The words have been manually labeled by Finn Årup Nielsen in 2009-2011.
+For more details please refer: [**AFINN**](http://www2.imm.dtu.dk/pubdb/views/publication_details.php?id=6010) 
+
+* The **NRC** Emotion Lexicon is a list of English words and their associations with eight basic emotions (anger, fear, anticipation, trust, surprise, sadness, joy, and disgust) and two sentiments (negative and positive). The annotations were manually done by crowdsourcing.
+For more details please refer: [**nrc**](http://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm)
+
+<br />
+
+#### Sentiment of each article
+
+```{r fig.align='left'}
+tidy1 %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(artcle_no, sentiment) %>%
+  spread(sentiment, n, fill = 0) %>%
+  mutate(sentiment = positive - negative) %>% 
+  ggplot(aes(artcle_no,sentiment)) +
+  geom_col() + 
+  labs(x = "") +
+  ggtitle("Sentiment of each article") +
+  theme_bw() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5))
+```
+
+This is what sentiment of all articles in 2 months having the specified word *parkland*, clearly indicating the dominance of negative sentiment level. There is some high positive sentimented articles which appeared recently.
+
+------
+
+#### Sentiment for selective news sections
+```{r fig.height=6,fig.width=9}
+sentiment_of_news <- tidy1 %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(new_desk, artcle_no, sentiment) %>%
+  spread(sentiment, n, fill = 0) %>%
+  mutate(sentiment = positive - negative) %>% 
+  filter(new_desk %in% c("Business","Washington","National","Opinion","NYTNow","Express"))
+
+ggplot(sentiment_of_news, aes(artcle_no, sentiment, fill = new_desk)) +
+  geom_col(show.legend = FALSE) +
+  geom_hline(yintercept = 0,alpha = 0.3) +
+  labs(x = "") +
+  facet_wrap(~new_desk, ncol = 2, scales = "free_y") +
+  theme_grey() +
+  theme(panel.grid = element_blank(),
+        plot.background = element_rect(fill = "gray93"),axis.ticks.y = element_blank())
+```
+
+As we see most of the articles are under *Business*,*National*,*Opinion* and *Washington* sections.
+The important observation from all facets is that the number as well as the level (height) of negative seniment is more than that of positive in all of the sections.
+
+------
+
+
+#### Positive and negative words
+
+Letus see what are frequently appeared positive and negative words which are contribted to the sentiments of articles depicted in previous plots.
+
+```{r fig.height=4}
+po_neg_words <- tidy1 %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  ungroup()
+
+po_neg_words %>% filter(word != 'trump') %>% # trump is sentimentally a positive word, but in news it is a noun, so it should be treated properly.
+  group_by(sentiment) %>%
+  top_n(10) %>%
+  ungroup() %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(y = "Contribution to sentiment",
+       x = NULL) +
+  coord_flip()
+```
+
+The word *like* is somewhat like outlier, which changes its meaning situationally. Because it is preposition, conjuction, noun, adverb and adjective as well. But in our analysis it is reason for high skewness in positive sentiment.
+
+One drawback of these unigrams is that they consider the single word only, no matter what was its previous word. Because some negative words like *no, never, not, without, don't* totally reverse the meaning of positive word to negativ and vise-versa. Such bigrams with negative first word are seen in bigram analysis.
+
+
+------
+
+
+#### Wordcloud
+
+```{r}
+library(reshape2)
+library(wordcloud)
+tidy1 %>%
+  inner_join(get_sentiments("bing")) %>%
+  filter(word != 'trump') %>% 
+  count(word, sentiment, sort = TRUE) %>%
+  acast(word ~ sentiment, value.var = "n", fill = 0) %>%
+  comparison.cloud(colors = c("gray80", "gray20"),
+                   max.words = 100)
+```
+
+```{r,include=FALSE,eval=FALSE,echo=FALSE}
+# wordcloud2::wordcloud2(data = tidy1 %>%
+#                          anti_join(stop_words) %>% 
+#                          select(word) %>% 
+#                          str_replace_all(pattern = NOT_WRD,replacement = " ") %>% 
+#                          str_replace_all(pattern = DIGIT,replacement = "") %>%
+#                          strsplit(split=" +") %>% 
+#                          unlist())
+```
+
+All frequent positive and negative words are put graphically together in wordcloud.
+
+
+------
+
+<br />
+
+### Term frequency and inverse document frequency [tf-idf]
+
+tf–idf or TFIDF is a numerical statistic that is intended to reflect how important a word is to a document in a collection or corpus. It is often used as a weighting factor in searches of information retrieval, text mining, and user modeling.
+
+**tf** measures the frequency or proportion of terms in each document. 
+If particular term is appeared many times in all documents, then that term is not at all important. So **idf** reduces the weight of such words which are common in most of documents. so to have a measure which quantifies the relative measure of each term(word) with respect to each document, we need to consider the product of both, i.e. *tf-idf*
+
+<br />
+<br />
+
+$tf(t,d) = \frac{\text{number of times term t appeared in document d}}{\text{total number of terms in document d}}$
+
+<!-- $$\begin{aligned} -->
+<!-- idf(t) &= \frac{N}{n}\\ -->
+<!--        &= \frac{\text{Total number of documents}}{\text{number of documents containing the term t}} -->
+<!-- \end{aligned}$$ -->
+<br />
+
+$idf(t) = log{\left[\frac{N}{n} \right]}  = log{\left[ \frac{\text{Total number of documents}}{\text{number of documents containing the term t}} \right]}$
+
+<br />
+
+$\text{tf-idf(t,d)} = tf(t,d) \times idf(t)$
+
+```{r}
+section_words <- tidy1 %>%
+  count(new_desk, word, sort = TRUE) %>%
+  ungroup()
+
+total_words <- section_words %>% 
+  group_by(new_desk) %>% 
+  summarize(total = sum(n))
+
+section_total_words <- left_join(section_words, total_words)
+
+section_total_words %>% head() %>% kable() %>% kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+```
+
+<br />
+
+#### Distribution of proportion of words
+```{r fig.align='center',fig.width=9}
+theme_set(theme_bw())
+ggplot(section_total_words %>% filter(new_desk %in% c("Business","Washington","National","Opinion","NYTNow","Express")), 
+       aes(x = n/total, y = ..scaled.., fill = new_desk)) +
+  stat_density(show.legend = FALSE,position = "identity") +
+  xlim(NA, 0.001) +
+  labs(x = "proportion") +
+  facet_wrap(~new_desk, ncol = 2, scales = "free_y") +
+  theme(strip.background = element_rect(fill = "#DCDCDC"))
+```
+
+This is distribution of proportion of words in each section separately. We see that words with less frequency have high density in almost all of the sections. There is discrete pattern of proportion in *Express and NYTNow*
+
+
+------
+
+
+#### Zipf's law
+
+* *Zipf’s law states that the frequency that a word appears is inversely proportional to its rank*
+
+Within a section, all words are given the rank based on their frequency of appearance, that is *rank*. Whereas term-frequency is ratio of frequency of term in particular section to total words in that section. There exists some inverse relationship between these two factors, which is stated by Zip.
+
+```{r fig.width=6,fig.height=4}
+selective_section_data <- section_total_words %>% 
+  filter(new_desk %in% c("Business","Washington","National","Opinion","NYTNow","Express","None","Culture","Learning","Metro")) %>% 
+  group_by(new_desk) %>% 
+  mutate(rank = row_number(), 
+         tf = n/total)
+
+theme_set(theme_bw())
+selective_section_data %>% 
+  filter(new_desk %in% c("Business","Washington","National","Opinion","NYTNow","Express")) %>% 
+  ggplot(aes(rank, tf, color = new_desk)) + 
+  geom_line(size = 1.1, alpha = 0.8, show.legend = FALSE) + 
+  labs(y = "term - frequency") + 
+  scale_x_log10() +
+  scale_y_log10()
+```
+
+From the graph, we see that Zipf's law is valid throughout different sections.
+
+------
+
+
+#### Top words interms of tf-idf across sections
+
+```{r fig.height=6,fig.width=9}
+tf_idf_data <- selective_section_data %>%
+  bind_tf_idf(word, new_desk, n)
+
+tf_idf_data %>%anti_join(data.frame(word = c("__","___","____","_____","---","----",""," "))) %>% 
+  filter(new_desk %in% c("Business","Washington","National","Opinion","NYTNow","Express")) %>% 
+  arrange(desc(tf_idf)) %>%
+  # mutate(word = factor(word, levels = rev(unique(word)))) %>%
+  group_by(new_desk) %>% 
+  top_n(12) %>% 
+  ggplot(aes(reorder(word, tf_idf),tf_idf, fill = new_desk)) +
+  geom_col(show.legend = FALSE) +
+  labs(x = NULL, y = "tf-idf") +
+  facet_wrap(~new_desk, ncol = 2, scales = "free") +
+  theme_bw() +
+  coord_flip() +
+  theme(strip.background = element_rect(fill = "gray90"))
+```
+
+------
+
+
+### Relationships between words: N-grams and correlations
+
+
+An N-gram is a contiguous sequence of N items from a given piece of text. The items can be phonemes, syllables, letters, words or base pairs according to the application. The N-grams typically are collected from a text or speech corpus.
+
+An N-gram of size 1 is referred to as a "unigram"; size 2 is a "bigram" (or, less commonly, a "digram"); size 3 is a "trigram" and so on.
+
+```{r echo=FALSE}
+img = magick::image_read(png::readPNG('./image/ngram.png'))
+plot(img)
+```
+
+N-grams can also be used for efficient approximate matching. By converting a sequence of items to a set of N-grams, it can be embedded in a vector space, thus allowing the sequence to be compared to other sequences in an efficient manner.
+
+However, we know empirically that if two strings of real text have a similar vector representation (as measured by cosine distance) then they are likely to be similar.
+
+
+##### N-gram Models
+
+Unigram model: $P(w_1)P(w_2)...P(w_n)$ <br />
+Bigram model: $P(w_1)P(w_2|w_1)P(w_3|w_2)...P(w_n|w_{n-1})$ <br />
+Trigram model: $P(w_1)P(w_2|w_1)P(w_3|w_1,w_2)...P(w_n|w_{n-1},w_{n-2})$ <br />
+N-gram model: $P(w_1)P(w_2|w_1)...P(w_n|w_{n-1},w_{n-2},...,w_{n-N+1})$ <br />
+
+N-gram models: [refer](http://www.cs.virginia.edu/~kc2wc/teaching/NLP16/slides/02-ngram.pdf)
+
+#### Analyzing bigrams
+
+```{r}
+bigrams_data <- mydata %>%
+  unnest_tokens(bigram, article_body, token = "ngrams", n = 2)
+
+bigrams_data %>%
+  count(bigram,sort = TRUE) %>% 
+  head(10) %>% kable() %>% kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+```
+
+As we see the most occuring words are stopwords, so it is better to remove such bigrams where either or both of its words are stopwords.
+
+```{r}
+bigrams_separated <- bigrams_data %>%
+  separate(bigram, c("word1", "word2"), sep = " ") # Split the column
+
+bigrams_filtered <- bigrams_separated %>% # remove stopwords
+  filter(!word1 %in% stop_words$word &
+           !word1 %in% unique(unlist(str_extract_all(bigrams_separated$word1,pattern = one_or_more(UGC_CONNECTOR_PUNCTUATION))))) %>%
+  filter(!word2 %in% stop_words$word &
+           !word2 %in% unique(unlist(str_extract_all(bigrams_separated$word1,pattern = one_or_more(UGC_CONNECTOR_PUNCTUATION)))))
+
+# new bigram counts:
+bigrams_filtered %>% 
+  count(word1, word2, sort = TRUE) %>% 
+  head(10) %>% kable() %>% kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+```
+
+Now this makes sense, as all stopwords are removed. Letus reunite those two words of bigram
+
+```{r}
+bigrams_united <- bigrams_filtered %>%
+  unite(bigram, word1, word2, sep = " ")
+
+bigrams_united %>% head(10) %>% kable() %>% kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+```
+
+<br />
+
+#### What are words with `parkland` and `gun`?
+```{r}
+t1 <- bigrams_filtered %>%
+  filter(word2 == "parkland") %>%
+  count(new_desk, word1,word2, sort = TRUE) %>% 
+  head(12)# %>% kable(format='html', table.attr='cellpadding="3"', output = FALSE) %>% kable_styling(bootstrap_options = "striped", full_width = F)
+
+t2 <- bigrams_filtered %>%
+  filter(word2 == "gun") %>%
+  count(new_desk, word1,word2, sort = TRUE) %>% 
+  head(12)# %>% kable(format='html', table.attr='cellpadding="3"', output = FALSE) %>% kable_styling(bootstrap_options = "striped", full_width = F) #, position = "float_right"
+
+grid.arrange(tableGrob(t1), tableGrob(t2), ncol = 2)
+```
+
+
+------
+
+
+#### Bigram tf-idf score
+
+Like unigrams, we can compute **tf-idf** score for bigrams also it is possible to calculate **tf-idf** score.
+
+```{r}
+bigram_tf_idf <- bigrams_united %>% # it is already free from stopwords
+  count(new_desk, bigram) %>%
+  bind_tf_idf(bigram, new_desk, n) %>%
+  arrange(desc(tf_idf))
+
+bigram_tf_idf %>% head(10) %>% kable() %>% kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+```
+
+The td_idf is high for these words, which appeared in rare sections of newspaper (i.e. Summary, SpecialSection, Weekend).
+
+```{r fig.height=6.6,fig.width=9}
+bigram_tf_idf %>% 
+  # anti_join(data.frame(word = c("__","___","____","_____","---","----","-----",""," ")),by= c('bigram'='word')) %>% 
+  filter(new_desk %in% c("Business","Washington","National","Opinion","NYTNow","Express")) %>% 
+  arrange(desc(tf_idf)) %>%
+  # mutate(word = factor(word, levels = rev(unique(word)))) %>%
+  group_by(new_desk) %>% 
+  top_n(12) %>% 
+  ggplot(aes(reorder(bigram, tf_idf),tf_idf, fill = new_desk)) +
+  geom_col(show.legend = FALSE) +
+  labs(x = NULL, y = "tf-idf") +
+  facet_wrap(~new_desk, ncol = 2, scales = "free") +
+  theme_bw() +
+  theme(strip.background = element_rect(fill = "gray90"),
+        strip.text = element_text(size = 9),
+        axis.text = element_text(size = 9)) +
+  coord_flip()
+```
+
+------
+
+<br />
+
+#### Negative words contributed to positive sentiment and vice-versa -> unigram vs bigram
+
+There are many cases where a bigram with first word being **negative** (e.g **not good, never killed**, etc). In such cases the unigram analysis seems to be week approach. So here are some bigrams with first word being negative and to what extent they would contributed to reverse sentiment if unigram approach is used is shown in below figure.
+
+```{r fig.height=6.6,fig.width=9}
+AFINN <- get_sentiments("afinn")
+negation_words <- c("not", "no", "never", "without","don't")
+
+negated_words <- bigrams_separated %>% 
+  select(-score) %>% 
+  filter(word1 %in% negation_words) %>%
+  inner_join(AFINN, by = c(word2 = "word")) %>%
+  count(new_desk,word1, word2, score=value, sort = TRUE) %>%
+  filter(new_desk %in% c("Business","Washington","National","Opinion","NYTNow","Express")) %>% 
+  ungroup()
+
+dp <- negated_words %>% 
+  mutate(contribution = n * score) %>%
+  arrange(desc(abs(contribution))) %>%
+  group_by(new_desk) %>% 
+  top_n(12,wt = abs(contribution)) %>%
+  ungroup() %>% 
+  mutate(nv = paste(word1,word2)) %>% 
+  arrange(new_desk,contribution) %>% # head(10)
+  mutate(order = row_number())
+  
+  dp %>% ggplot(aes(order,contribution, fill = contribution > 0)) +
+    geom_col(show.legend = FALSE,stat = "identity") +
+    xlab("Words preceded by \"negations\"") +
+    ylab("Sentiment score * number of occurrences") +
+    facet_wrap(~new_desk,ncol=2,scales = "free") +
+    theme_gray() +
+    theme(strip.background = element_rect(fill = "#DCDCDC"),
+          strip.text = element_text(size = 9),
+          axis.text = element_text(size = 8),
+          axis.ticks = element_blank(),
+          panel.grid = element_blank(),
+          plot.background = element_rect(fill = "gray94")) +
+    scale_x_continuous(
+      breaks = dp$order,
+      labels = dp$nv,
+      expand = c(0,0)
+      ) +
+    coord_flip()
+```
+
+These bigrams when considered in unigrams (without those negations) contributed as reverse sentiment to the news in different sections
+
+------
+
+
+### Network of bigrams
+
+In a bigram, out of two words, sometimes one or both may be appeared with some other words. So it would be interesting to know if there is network of links between many words along with their strength (frequency).
+
+```{r}
+library(igraph)
+bigram_graph <- bigrams_filtered %>%
+  count(word1,word2,sort = TRUE) %>% 
+  filter(n > 50) %>%
+  graph_from_data_frame()
+
+bigram_graph
+```
+
+```{r fig.align='center',fig.height=6,fig.width=9}
+set.seed(11)
+library(ggraph)
+
+a <- grid::arrow(type = "closed", length = unit(.12, "inches"))
+
+ggraph(bigram_graph, layout = "fr") + #,algorithm = 'nicely'
+  geom_edge_link(aes(edge_alpha = n), show.legend = FALSE,
+                 arrow = a, end_cap = circle(.06, 'inches')) +
+  geom_node_point(color = "lightblue", size = 5) +
+  geom_node_text(aes(label = name), vjust = 1, hjust = 1) +
+  theme_void()
+```
+
+For example, if we take the word **gun**, which is linked to many other words in respective bigrams with different nuber of times. Most of the times it appeared with **control** then after **violence, laws, owners, restrictions, rights, safety**. Again **control** is connected to **measures** in another bigram. Like this we can see some other patterns in above network diagram.
+
+------
+
+
+### Count of word pairs in each article using `widyr` package
+
+The widyr package makes operations such as computing counts and correlations easy, by simplifying the pattern of “widen data, perform an operation, then re-tidy data” 
+
+Now we are going to see which two words (need not be adjacent) appeared frequently in each article of *National* and *Washington* sections respectively.
+
+```{r}
+word_pairs_National <- tidy1 %>% 
+  filter(new_desk == "National") %>%
+  filter(!word %in% stop_words$word) %>% 
+  pairwise_count(word, artcle_no, sort = TRUE)
+```
+
+```{r fig.height=5.3,fig.width=7}
+df = word_pairs_National %>% head(50)
+
+for(i in 1:50){
+  for(j in 1:50){
+    if(df$item1[i] == df$item2[j] & df$item1[j] == df$item2[i] & df[j,1] != "a"){
+      df[j,] = "a"
+    }
+      
+  }
+}
+df$n = as.integer(df$n)
+df = df %>% filter(item1 != "a")
+
+theme_set(theme_bw())
+df %>%
+  ggplot(aes(reorder(paste(item1,item2,sep = "-"),n),n)) +
+  # geom_col(fill = "#9DB1D3",width = 0.7) +
+  geom_point(shape = 23,fill = "#7F9FDF",color = "#7F9FDF",size = 3.5) +
+  geom_segment(aes(xend = reorder(paste(item1,item2,sep = "-"),n), yend = 0),size = 4, color = "#7F9FDF") +#lineend = "square",
+  labs(x = "Pair of words",title = "Section - National") +
+  scale_y_continuous(expand = c(0,0),limits = c(0,100)) +
+  theme(plot.title = element_text(vjust = 0.5,hjust = 0.5),axis.ticks.y = element_blank()) +
+  coord_flip()
+```
+
+
+As we see here, most of the words in bigram are among *shooting*,*school*,*gun* and *parkland*. Let us see which are the other words appeared with these dominant words in **National** section
+
+
+------
+
+```{r fig.width=9,fig.height=6}
+theme_set(theme_bw())
+set.seed(55)
+g = function(df){
+  df %>% 
+    ggplot(aes(reorder(item2,n),n)) +
+    geom_col(fill = sample(c("#C59DD3",'#9999ff','#ff66ff','#ffe066','#59b300','#20db96','#e0821d'),
+                           size = 1,replace = FALSE),width = 0.5) + 
+    theme(axis.text.x = element_text(hjust = -0.01),
+          axis.ticks.y = element_blank(),
+          plot.margin = rep(unit(0,"null"),4),
+          panel.margin = unit(0,"null")) +
+    labs(x = "",y = "") +
+    scale_y_continuous(expand = c(0,0),limits = c(0,100)) +
+    coord_flip()
+  }
+
+df <-  word_pairs_National %>% 
+  filter(item1 =="shooting") %>% 
+  arrange(desc(n)) %>% 
+  head(20)
+
+for(i in 1:20){
+  for(j in 1:20){
+    if(df$item1[i] == df$item2[j] & df$item1[j] == df$item2[i] & df[j,1] != "a"){
+      df[j,] = "a"
+    }
+      
+  }
+}
+
+df$n = as.integer(df$n)
+df = df %>% filter(item1 != "a")
+g1 = g(df) + labs(title = "Shooting") + theme(plot.title = element_text(vjust = 0.5, hjust = 0.5,size = 9))
+
+df <-  word_pairs_National %>% 
+  filter(item1 =="parkland") %>% 
+  arrange(desc(n)) %>% 
+  head(20)
+
+for(i in 1:20){
+  for(j in 1:20){
+    if(df$item1[i] == df$item2[j] & df$item1[j] == df$item2[i] & df[j,1] != "a"){
+      df[j,] = "a"
+    }
+      
+  }
+}
+
+df$n = as.integer(df$n)
+df = df %>% filter(item1 != "a")
+g2 = g(df) + labs(title = "Parkland") + theme(plot.title = element_text(vjust = 0.5, hjust = 0.5,size = 9))
+
+df <-  word_pairs_National %>% 
+  filter(item1 =="gun") %>% 
+  arrange(desc(n)) %>% 
+  head(20)
+
+for(i in 1:20){
+  for(j in 1:20){
+    if(df$item1[i] == df$item2[j] & df$item1[j] == df$item2[i] & df[j,1] != "a"){
+      df[j,] = "a"
+    }
+      
+  }
+}
+
+df$n = as.integer(df$n)
+df = df %>% filter(item1 != "a")
+g3 = g(df) + labs(title = "Gun") + theme(plot.title = element_text(vjust = 0.5, hjust = 0.5,size = 9))
+
+df <-  word_pairs_National %>% 
+  filter(item1 =="school") %>% 
+  arrange(desc(n)) %>% 
+  head(20)
+
+for(i in 1:20){
+  for(j in 1:20){
+    if(df$item1[i] == df$item2[j] & df$item1[j] == df$item2[i] & df[j,1] != "a"){
+      df[j,] = "a"
+    }
+      
+  }
+}
+
+df$n = as.integer(df$n)
+df = df %>% filter(item1 != "a")
+g4 = g(df) + labs(title = "school") + theme(plot.title = element_text(vjust = 0.5, hjust = 0.5,size = 9))
+
+gridExtra::grid.arrange(grobs = list(g3,g1,g2,g4))
+```
+
+
+------
+
+
+#### Sankey diagram
+
+```{r results='asis',tidy=FALSE}
+
+op <- options(gvis.plot.tag = 'chart')
+
+df1 = word_pairs_National %>% head(40)
+
+for(i in 1:40){
+  for(j in 1:40){
+    if(df1$item1[i] == df1$item2[j] & df1$item1[j] == df1$item2[i] & df1[j,1] != "a"){
+      df1[j,] = "a"
+    }
+      
+  }
+}
+df1$n = as.integer(df1$n)
+
+df1 = df1 %>% filter(item1 != "a")
+
+g1 <- gvisSankey(df1, from="item1",
+           to="item2", weight="n",
+           options=list(
+             height=500,width = 900,
+             sankey="{link: { colorMode: 'gradient',
+              colors: ['#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6', '#F7E850'],color: { stroke: '#ABB2B9'}}, 
+                    node: { colors: ['#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6', '#F7E850'], nodePadding: '100' ,
+             label: { fontName: 'Times-Roman',
+                                         fontSize: 20,
+                                         color: '#871b47',
+                                         bold: true,
+                                         italic: true }}}",
+             # title="Frequency of words appearing in each article of 'National' section of NYT",
+             titleTextStyle="{color:'purple', fontName:'Courier', fontSize:16}",
+             backgroundColor="#D3D3D3"
+             ))
+# '#a6cee3', '#b2df8a', '#fb9a99', '#fdbf6f', '#cab2d6', '#F7E850'
+# 'blue', 'orange', 'green','purple'
+print(g1,'chart')
+```
+
+Sankey digram represents how different words in bigram are interconnected directly or indirectly through a flow view.
+
+------
+
+```{r}
+word_pairs_Washington <- tidy1 %>% 
+  filter(new_desk == "Washington") %>%
+  filter(!word %in% stop_words$word) %>% 
+  pairwise_count(word, artcle_no, sort = TRUE)
+```
+
+```{r fig.height=5.3,fig.width=7}
+df = word_pairs_Washington %>% head(50)
+
+for(i in 1:50){
+  for(j in 1:50){
+    if(df$item1[i] == df$item2[j] & df$item1[j] == df$item2[i] & df[j,1] != "a"){
+      df[j,] = "a"
+    }
+      
+  }
+}
+df$n = as.integer(df$n)
+df = df %>% filter(item1 != "a")
+
+theme_set(theme_bw())
+df %>%
+  ggplot(aes(reorder(paste(item1,item2,sep = "-"),n),n)) +
+  # geom_col(fill = "#9DB1D3",width = 0.7) +
+  geom_point(shape = 23,fill = "#E59866",color = "#E59866",size = 3.5) +
+  geom_segment(aes(xend = reorder(paste(item1,item2,sep = "-"),n), yend = 0),size = 4, color = "#E59866") +
+  labs(x = "Pair of words",title = "Section - Washington") +
+  theme(plot.title = element_text(hjust = 0.5,vjust = 0.5),axis.ticks.y = element_blank()) +
+  scale_y_continuous(expand = c(0,0),limits = c(0,100)) +
+  coord_flip()
+```
+
+
+As we see here, most of the words in bigram are among *school*,*fla*,*trump* and *parkland*. Let us see which are the other words appeared with these dominant words in **Washington** section
+
+
+------
+
+
+```{r fig.width=9,fig.height=6}
+theme_set(theme_bw())
+set.seed(55)
+g = function(df){
+  df %>% 
+    ggplot(aes(reorder(item2,n),n)) +
+    geom_col(fill = sample(c("#C59DD3",'#9999ff','#ff66ff','#ffe066','#59b300','#20db96','#e0821d'),
+                           size = 1,replace = FALSE),width = 0.5) + 
+    theme(axis.text.x = element_text(hjust = -0.01),
+          axis.ticks.y = element_blank(),
+          plot.margin = rep(unit(0,"null"),4),
+          panel.margin = unit(0,"null")) +
+    labs(x = "",y = "") +
+    scale_y_continuous(expand = c(0,0),limits = c(0,60)) +
+    coord_flip()
+  }
+
+df <-  word_pairs_Washington %>% 
+  filter(item1 =="trump") %>% 
+  arrange(desc(n)) %>% 
+  head(20)
+
+for(i in 1:20){
+  for(j in 1:20){
+    if(df$item1[i] == df$item2[j] & df$item1[j] == df$item2[i] & df[j,1] != "a"){
+      df[j,] = "a"
+    }
+      
+  }
+}
+
+df$n = as.integer(df$n)
+df = df %>% filter(item1 != "a")
+g1 = g(df) + labs(title = "Trump") + theme(plot.title = element_text(vjust = 0.5, hjust = 0.5,size = 9))
+
+df <-  word_pairs_Washington %>% 
+  filter(item1 =="parkland") %>% 
+  arrange(desc(n)) %>% 
+  head(20)
+
+for(i in 1:20){
+  for(j in 1:20){
+    if(df$item1[i] == df$item2[j] & df$item1[j] == df$item2[i] & df[j,1] != "a"){
+      df[j,] = "a"
+    }
+      
+  }
+}
+
+df$n = as.integer(df$n)
+df = df %>% filter(item1 != "a")
+g2 = g(df) + labs(title = "Parkland") + theme(plot.title = element_text(vjust = 0.5, hjust = 0.5,size = 9))
+
+df <-  word_pairs_Washington %>% 
+  filter(item1 =="school") %>% 
+  arrange(desc(n)) %>% 
+  head(20)
+
+for(i in 1:20){
+  for(j in 1:20){
+    if(df$item1[i] == df$item2[j] & df$item1[j] == df$item2[i] & df[j,1] != "a"){
+      df[j,] = "a"
+    }
+      
+  }
+}
+
+df$n = as.integer(df$n)
+df = df %>% filter(item1 != "a")
+g3 = g(df) + labs(title = "School") + theme(plot.title = element_text(vjust = 0.5, hjust = 0.5,size = 9))
+
+df <-  word_pairs_Washington %>% 
+  filter(item1 =="fla") %>% 
+  arrange(desc(n)) %>% 
+  head(20)
+
+for(i in 1:20){
+  for(j in 1:20){
+    if(df$item1[i] == df$item2[j] & df$item1[j] == df$item2[i] & df[j,1] != "a"){
+      df[j,] = "a"
+    }
+      
+  }
+}
+
+df$n = as.integer(df$n)
+df = df %>% filter(item1 != "a")
+g4 = g(df) + labs(title = "fla") + theme(plot.title = element_text(vjust = 0.5, hjust = 0.5,size = 9))
+
+gridExtra::grid.arrange(grobs = list(g3,g1,g2,g4))
+```
+
+
+------
+
+#### Word-pair : Network diagram of frequently appeared pairs
+```{r fig.align='center',fig.height=6.2,fig.width=9}
+library(ggraph)
+library(igraph)
+
+set.seed(25)
+a <- grid::arrow(type = "closed", length = unit(.10, "inches"))
+f =  word_pairs_Washington %>%
+  head(100) %>% 
+  graph_from_data_frame() %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(edge_alpha = n), show.legend = FALSE, end_cap = circle(.06, 'inches')) + #arrow = a,
+  geom_node_point(color = "pink", size = 4) +
+  geom_node_text(aes(label = name), repel = TRUE) +
+  theme_void()
+f
+```
+
+This network again tells how two words appeared frequently in *Washington* section.
+
+------
+
+
+### coefficient of association between two words(correlation)
+
+Here we’ll focus on the $\phi$ coefficient, a common measure for binary correlation. The focus of the phi coefficient is how much more likely it is that either both word X and Y appear, or neither do, than that one appears without the other in each article
+
+This $\phi$ coefficient is actually a statistical formula for measuring association between two attributes. Same formula here we are using to measure the level as well as direction of association between two words in each news article of a particular section(s).
+
+```{r echo=FALSE}
+x <- c('n11','n01','n.1')
+y <- c('n10','n00','n.0')
+z <- c('n1.','n0.','n')
+
+d = data.frame(x, y,z)
+colnames(d) = c('d has word Y','d has no word Y','Total')
+row.names(d) = c('d has word X', 'd has no word X', 'Total')
+
+kable(d) %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+$$
+\phi = \frac{{n_{11}}{n_{00}} - {n_{10}}{n_{01}}} {\sqrt{n_1.n_0.n_.0n_.1}}
+$$
+<br />
+
+Pairs with high correlation(green) have high level of association and those with low correlation(red) have less association.
+
+```{r}
+word_cor_Business <-tidy1 %>% # Here we are considering *Business* section firstly.
+  filter(new_desk == "Business") %>%
+  filter(!word %in% stop_words$word) %>% 
+  group_by(word) %>%
+  filter(n() >= 50) %>%
+  pairwise_cor(word, artcle_no, sort = TRUE)
+
+word_cor_National <-tidy1 %>%  #  This is for *National* section
+  filter(new_desk == "National") %>%
+  filter(!word %in% stop_words$word) %>% 
+  group_by(word) %>%
+  filter(n() >= 50) %>%
+  pairwise_cor(word, artcle_no, sort = TRUE)
+```
+
+
+```{r fig.height=7,fig.width=9}
+df1 = word_cor_Business %>% head(50)
+df2 = word_cor_Business %>% tail(50)
+df = bind_rows(df1,df2)
+for(i in 1:100){
+  for(j in 1:100){
+    if(df$item1[i] == df$item2[j] & df$item1[j] == df$item2[i] & df[j,1] != "a"){
+      df[j,] = "a"
+    }
+      
+  }
+}
+
+df$correlation = as.numeric(df$correlation)
+df = df %>% filter(item1 != "a")
+
+df %>%
+  ggplot(aes(as.numeric(reorder(paste(item1,item2,sep = " - "),correlation)),correlation)) +
+  geom_col(aes(fill = as.factor(sign(correlation))),
+           alpha = c(seq(1,0.3,length.out = 25),seq(0.3,1,length.out = 25)),width = 0.5,show.legend = FALSE) + 
+  labs(x = "", y = "Correlation", title = "Business section", subtitle="Level of association b/w two words") +
+  theme_bw() +
+  theme(axis.text.y = element_text(vjust = 0.01,size = 10),
+        plot.title = element_text(vjust = 0.5,hjust = 0.5),
+        plot.subtitle =  element_text(vjust = 0.5,hjust = 0.5),
+        panel.grid.major.y = element_blank(),
+        axis.ticks = element_blank()) +
+  scale_y_continuous(limits = c(-0.5,1),expand = c(0,0)) +
+  scale_fill_manual(values = c("red","springgreen")) +
+  scale_x_continuous(breaks = 50:1,
+                     labels = c(rep("",25),as.character(reorder(paste(df$item1,df$item2,sep = " - "),df$correlation)[26:50])),
+                     sec.axis = sec_axis(~.,
+                                         breaks = 50:1,
+                                         labels = c(as.character(reorder(paste(df$item1,df$item2,sep = " - "),df$correlation)[1:25]),rep("",25))
+                                         )) +
+  coord_flip()
+```
+
+
+------
+
+```{r fig.height=7,fig.width=9}
+df1 = word_cor_National %>% 
+  filter(!item1 %in% c("edition","print","reprints,","subscribe","today's") &
+           !item2 %in% c("edition","print","reprints,","subscribe","today's")) %>% head(50)
+
+df2 = word_cor_National %>% 
+  filter(!item1 %in% c("edition","print","reprints,","subscribe","today's") &
+           !item2 %in% c("edition","print","reprints,","subscribe","today's")) %>% tail(50)
+
+df = bind_rows(df1,df2)
+for(i in 1:100){
+  for(j in 1:100){
+    if(df$item1[i] == df$item2[j] & df$item1[j] == df$item2[i] & df[j,1] != "a"){
+      df[j,] = "a"
+    }
+      
+  }
+}
+
+df$correlation = as.numeric(df$correlation)
+df = df %>% filter(item1 != "a")
+
+df[1:50,] %>%
+  ggplot(aes(as.numeric(reorder(paste(item1,item2,sep = " - "),correlation)),correlation)) +
+  geom_col(aes(fill = as.factor(sign(correlation))),
+           alpha = c(seq(1,0.3,length.out = 25),seq(0.3,1,length.out = 25)),width = 0.5,show.legend = FALSE) + 
+  labs(x = "", y = "Correlation", title = "Section - National", subtitle="Level of association b/w two words") +
+  theme_bw() +
+  theme(axis.text.y = element_text(vjust = 0.01,size = 10),
+        plot.title = element_text(vjust = 0.5,hjust = 0.5),
+        plot.subtitle =  element_text(vjust = 0.5,hjust = 0.5),
+        panel.grid.major.y = element_blank(),
+        axis.ticks = element_blank()) +
+  scale_y_continuous(limits = c(-0.5,1),expand = c(0,0)) +
+  scale_fill_manual(values = c("red","springgreen")) +
+  scale_x_continuous(breaks = 50:1,
+                     labels = c(rep("",25),as.character(reorder(paste(df$item1,df$item2,sep = " - "),df$correlation)[26:50])),
+                     sec.axis = sec_axis(~.,
+                                         breaks = 50:1,
+                                         labels = c(as.character(reorder(paste(df$item1,df$item2,sep = " - "),df$correlation)[1:25]),rep("",25))
+                                         )) +
+  coord_flip()
+```
+
+
+------
+
+#### Association between pairs: network digram
+
+```{r fig.align='center',fig.height=6.2,fig.width=9, "(Section: National)"}
+library(ggraph)
+library(igraph)
+
+set.seed(25)
+
+f = word_cor_National %>%
+  filter(!item1 %in% c("edition","print","reprints,","subscribe","today's") &
+           !item2 %in% c("edition","print","reprints,","subscribe","today's")) %>% 
+  filter(correlation > .50) %>%
+  graph_from_data_frame() %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(edge_alpha = correlation), show.legend = FALSE) +
+  geom_node_point(color = "pink", size = 4) +
+  geom_node_text(aes(label = name), repel = TRUE) +
+  theme_void()
+f
+```
+
+Thus different words are connected to each other by a correlation. We see some words like *Washington, Sheriff, gun* are having maximum number of connections, meaning there is positive association between these words with most of some other words in news.
+
+------
+
+
+```{r fig.align='center',fig.height=5.5,fig.width=9, "(Section: Business)"}
+library(visNetwork)
+df = word_cor_Business %>% filter(correlation >= 0.5)
+df$i1 = as.numeric(factor(df$item1,levels = unique(c(df$item1,df$item2))))
+df$i2 = as.numeric(factor(df$item2,levels = unique(c(df$item1,df$item2))))
+df = df[!duplicated(df$correlation),]
+
+nodes = as.data.frame(table(c(df$item1,df$item2),c(df$i1,df$i2))) %>% filter(Freq != 0)
+colnames(nodes) = c('label','id','value')
+nodes$label = as.character(nodes$label)
+nodes$id = as.integer(as.character(nodes$id))
+nodes$shape='ellipse'
+nodes$group = "B"
+# nodes$font.size = nodes$value*2
+
+
+edges <- data.frame(from = df$i1, to = df$i2,length = df$correlation,value= df$correlation,title = df$correlation,shadow = FALSE)
+# edges$label = round(df$correlation,2) #arrows = "to",
+visNetwork(nodes, edges, width = "100%")  %>%
+  visInteraction(navigationButtons = TRUE)
+  # visOptions(selectedBy = "label",highlightNearest = list(enabled =TRUE, degree = 2)) %>% 
+  # visGroups(groupname = "B", shape = 'icon', icon = list(code = "f0c2")) %>% # , color = "pink",size = 75
+  # visLegend() %>%
+  # addFontAwesome()
+  # visHierarchicalLayout(direction = "LR")
+```
+
+
+
+------
+
+
+### Topic modeling
+
+* **A method for finding a group of words (i.e topic) from a collection of documents that best represents the information in the collection**.
+It can also be thought of as a form of text mining – a way to obtain recurring patterns of words in textual material.
+
+* Topic modeling is a method for unsupervised classification of documents, similar to clustering on numeric data, which finds natural groups of items based on the similarity between their conents. It provides a simple way to analyze large volumes of unlabeled text.
+
+* A "topic" consists of a cluster of words that frequently occur together. Using contextual clues, topic models can connect words with similar meanings and distinguish between uses of words with multiple meanings.
+
+* There are many techniques that are used to obtain topic models.
+   - Latent Dirichlet Allocation (LDA): a widely used topic modelling technique.
+   - TextRank process: a graph-based algorithm to extract relevant key phrases.
+
+<br />
+
+#### LDA [Latent Dirichlet allocation]
+
+Latent Dirichlet allocation (LDA) is a one of the popular method for fitting a topic model. Here each document is treated as a mixture of topics, and each topic as a mixture of words.
+
+LDA is a mathematical method for finding the mixture of words that is associated with each topic, while also determining the mixture of topics that describes each document.
+
+In LDA, we assume that there are k underlying latent topics according to which documents are generated, and that each topic is represented as a multinomial distribution over the $|V|$ words in the vocabulary. A document is generated by sampling a mixture of these topics and then sampling words from that mixture. 
+
+More precisely, a document of N words $W = (w_1,w_2,...w_N)$ is generated by the following process. First, $\theta$ is sampled from a Dirichlet $(\alpha_1,\alpha_2,...,\alpha_k)$ distribution. This means that $\theta$ lies in the (k - 1)-dimensional simplex: $\theta_i \ge 0, \sum_i\theta_i=1$. Then, for each of the N words, a topic $z_n \in \{1,2,...k\} $ is sampled from a $Mult(\theta)$
+distribution $P(z_n=i/\theta) = \theta_i$ . Finally, each word $w_n$ is sampled, conditioned on the $z_n$th topic, from the multinomial distribution $P(w/z_n)$. Intuitively, $\theta_i$ can be thought of as the degree to which topic $i$ is referred to in the document. Written out in full, the probability of a document is therefore the following mixture:
+
+$p(w) = \int_\theta \left( \prod \limits_{n=1}^{N} \sum \limits_{z_n=1}^{k} P(w_n|z_n;\beta) P(z_n|\theta)\right)P(\theta;\alpha) d\theta$
+
+
+where $P(\theta;\alpha)$ is Dirichlet, $P(z_n|\theta)$ is a multinomial parameterized by $\theta$, and $P(w_n|z_n;\beta)$ is a multinomial over the words. This model is parameterized by the kdimensional Dirichlet parameters $\alpha = (\alpha_1,\alpha_2,...,\alpha_k)$ and a $k\times|{V}|$ matrix,$\beta$, which are parameters controlling the k multinomial distributions over words.
+
+In our case each news article(500) is a single document and topics are particular sections like **National**,**Sports**,**Politics**, etc
+
+```{r,echo=FALSE,fig.align='center'}
+plot(1:10,1:10,type="n",xlab="",ylab="",axes = FALSE)
+plotrix::draw.circle(5,5,c(2.2,1.2,0.43),border="purple",
+                                 col=c("#ff00ff","#ff77ff","#ffccff"),lty=1,lwd=1)
+text(x = 5,y=1.9,"Document",cex = 1.5)
+text(x = 5,y=3.5,"Topic",cex = 1)
+text(x = 5,y=5,"Word",cex = 0.8)
+```
+
+
+The topic modeling is done on the news articles which are dominant interms of frequency. Thus *Opinion, Business, Washington, NYTNow* these are most sections we are refering in topic modeling. What all here done is taking all words from these four sections and then modeling them in four topics. At last we depict the effect of our modeling in pictorial way, where it is possible to know how well our modelling classified each word in different sections.
+
+
+#### Data Preparation
+
+First of all, we are using `topicmodels` package for topic modeling, which needa a Document Term Matrix, and it is directly obtained by applying `cast_dtm()` function from `tidytext` package on the tidy data.
+
+```{r}
+word_count <- tidy1 %>% 
+  filter(new_desk %in% c("Opinion","Business","Washington","NYTNow"),
+         !word %in% c("___","____","_____")) %>% 
+  # ,"gun","school","student","people","shooting","parkland","florida","control","17","day","schools"
+  # "Insider","U.S./Politics","Sports","Podcasts" #c("Washington","National","Opinion","NYTNow","Business","Learning")
+  anti_join(stop_words) %>%
+  mutate(document = paste(new_desk,artcle_no,sep = "_")) %>% 
+  count(document,word)
+
+word_count %>% arrange(-n) %>% head(10) %>% kable()
+
+sections_dtm <- word_count %>%
+  cast_dtm(document, word, n)
+
+sections_dtm
+```
+
+#### LDA on sections
+
+As we considered 4 sections only, so the number of topics is also 4.
+```{r}
+sections_lda <- LDA(sections_dtm, k = 4, control = list(seed = 123))
+sections_lda
+```
+
+##### Beta values
+
+* **Beta: ** Which is a measure of probability of each word being classified in each topic. It is also called *per-topic-per-word probabily*
+
+Document can be actually represented as the `Section_serial.number` for convenience.
+
+```{r}
+sections_topics <- tidy(sections_lda, matrix = "beta")
+sections_topics %>% tail(10) %>% kable()
+```
+
+The top 10 words in each topic interms of beta values are given in below graph.
+
+```{r}
+top_terms <- sections_topics %>%
+  group_by(topic) %>%
+  top_n(10, beta) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+
+# top_terms
+
+top_terms %>%
+  mutate(term = reorder(term, beta)) %>%
+  ggplot(aes(term, beta, fill = factor(topic))) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  ggtitle(label = "Topicwise beta values of top words") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  coord_flip()
+```
+
+#### Per-document classification
+
+The document is each news article. As already mentioned, document name is combination of section and article serial number. Here the Document-topic probability is calculated (called *gamma*), which tells by what probability particular topic is related to particular document.
+```{r}
+sections_gamma <- tidy(sections_lda, matrix = "gamma")
+sections_gamma %>% head(10)
+```
+Each of these values is an estimated proportion of words from that particular document that are generated from that given topic.
+
+```{r}
+sections_gamma <- sections_gamma %>%
+  separate(document, c("section", "article_no"), sep = "_", convert = TRUE)
+
+# sections_gamma
+```
+
+```{r}
+sections_gamma %>%
+  mutate(article_no = reorder(article_no, gamma * topic)) %>%
+  ggplot(aes(factor(topic), gamma)) +
+  geom_boxplot() +
+  ggtitle(label = "Resemble in topic and section") +
+  theme(panel.grid = element_blank(),plot.title = element_text(hjust = 0.5)) +
+  facet_wrap(~ section)
+```
+
+As we see, the topic 1 corresponds to *Business*, topic 2 corresponds to *Washington*, topic 3 and topic 4 are  corresponding to *NYTNow* and *Opinion* sections respectively. But topic 2 which is analogous to *Washington* seems to have some contribution to *Business* and *Opininion* sections as well. Means there are some words in *Washington* (topic 2), which are also in other two mentioned sections (topics). Similarly the pattern of overlap of words is seen in other topics also. This will be clearly seen in below graph.
+
+```{r}
+section_classifications <- sections_gamma %>%
+  group_by(section,article_no) %>%
+  top_n(1, gamma) %>%
+  ungroup()
+
+section_classifications %>% group_by(topic) %>% top_n(3,gamma)
+```
+
+```{r}
+news_topics <- section_classifications %>%
+  count(section, topic) %>%
+  group_by(section) %>%
+  top_n(1, n) %>%
+  ungroup() %>%
+  transmute(consensus = section, topic)
+```
+
+#### Assignments
+
+Now we are assigning each topic to each sections and plotting the graph of classification, which will reveal how well the modeling is.
+```{r}
+assignments <- augment(sections_lda, data = sections_dtm)
+# assignments
+assignments <- assignments %>%
+  separate(document, c("section", "article_no"), sep = "_", convert = TRUE) %>%
+  inner_join(news_topics, by = c(".topic" = "topic"))
+
+# assignments
+```
+
+
+```{r}
+library(scales)
+assignments %>%
+  count(section, consensus, wt = count) %>%
+  group_by(section) %>%
+  mutate(percent = n / sum(n)) %>%
+  ggplot(aes(consensus, section, fill = percent)) +
+  geom_tile() +
+  scale_fill_gradient2(high = "red", label = percent_format()) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        panel.grid = element_blank()) +
+  labs(x = "Section words were assigned to",
+       y = "Section words came from",
+       fill = "% of assignments")
+```
+
+The graph tells us that most of the words which came from the section *Opinion* are classified into *NYTNow* and *Washington*. Anyhow there is sharing of some common words (must be related to parkland shooting) in almost all sections to some extent at least. But still *Business, Washington and NYTNow* sections seem to have better classification.
+
+
+------
+
+THANK YOU
+
+<hr/>
+
+```{r echo=FALSE,eval=FALSE,include=FALSE,echo=FALSE}
+b <- nytimes::nyt_search(q = "Parkland",n = 93,end_date = "20180419",apikey = NYTIMES_AS_KEY)
+d <- nytimes::data.frame.search(x = b)
+d <- d[order(d$score,decreasing = TRUE),]
+names(d)
+
+head(word_pairs_National,10)  %>% group_by(b1 = paste(item1,item2),b2 =paste(item2,item1),n) %>% count(b1)
+head(word_pairs_National,10)  %>% group_by(item1,item2) %>% tally()
+```
+
+```{r,eval=FALSE,include=FALSE,echo=FALSE}
+a$data$`_id`[1]
+d$id[1]
+
+a$data$score[1]
+d$score[9]
+
+tail(a$data$score)
+tail(d$score)
+
+tail(a$data$`_id`)
+tail(d$id)
+
+setdiff(d$id,a$data$`_id`)
+
+a$data$snippet[1:10]
+d$snippet[1:10]
+```
+
+
+```{r,eval=FALSE,include=FALSE,echo=FALSE}
+
+# For article search and geographical search API's we can use the library `rtimes` and for remaining searches we need to use the library `nytimes`. 
+g <- geo_search(country_code = 'IN',key = NYTIMES_GEO_KEY)
+dim(g$data)
+
+g$data$concept_name[32]
+g$data$name[32]
+g$data$country_code[32]
+g$data$country_name[32]
+g$data$admin_name1[32]
+
+colnames(a$data)
+
+x <- fromJSON("http://api.nytimes.com/svc/search/v2/articlesearch.json?q=parkland&api-key=5e409c3099cd48c68bdbd5aa55b5e1d1", flatten = TRUE) %>% data.frame()
+
+head(x)
+
+b = cg_billscosponsor(memberid='S001181', type='cosponsored',key = PROPUBLICA_API_KEY)
+b$data$summary[7]
+table(b$data$primary_subject)
+```
+
+
+
